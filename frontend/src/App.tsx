@@ -11,6 +11,7 @@ import { PersonDetailPage } from "./pages/PersonDetailPage";
 import { SiteFinancePage } from "./pages/SiteFinancePage";
 import { AccountingPage } from "./pages/AccountingPage";
 import { MetersPage } from "./pages/MetersPage";
+import { RequestsPage } from "./pages/RequestsPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/sites/:siteId/finance" element={<SiteFinancePage />} />
             <Route path="/sites/:siteId/accounting" element={<AccountingPage />} />
             <Route path="/sites/:siteId/meters" element={<MetersPage />} />
+            <Route path="/sites/:siteId/requests" element={<RequestsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
