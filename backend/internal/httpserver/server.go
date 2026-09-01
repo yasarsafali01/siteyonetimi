@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"siteyonetimi/backend/internal/accounting"
 	"siteyonetimi/backend/internal/auth"
 	"siteyonetimi/backend/internal/config"
 	"siteyonetimi/backend/internal/crm"
@@ -43,6 +44,9 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	financeService := finance.NewService(pool)
 	financeHandler := finance.NewHandler(financeService)
 
+	accountingService := accounting.NewService(pool)
+	accountingHandler := accounting.NewHandler(accountingService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
@@ -51,6 +55,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	siteHandler.RegisterRoutes(protected)
 	crmHandler.RegisterRoutes(protected)
 	financeHandler.RegisterRoutes(protected)
+	accountingHandler.RegisterRoutes(protected)
 
 	return router
 }

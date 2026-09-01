@@ -28,22 +28,22 @@ type Block struct {
 }
 
 type Unit struct {
-	ID               uuid.UUID `json:"id"`
-	TenantID         uuid.UUID `json:"tenantId"`
-	SiteID           uuid.UUID `json:"siteId"`
-	BlockID          uuid.UUID `json:"blockId"`
-	UnitNumber       string    `json:"unitNumber"`
-	Floor            *int      `json:"floor"`
-	Type             string    `json:"type"` // daire | dukkan | ofis
-	GrossSqm         *float64  `json:"grossSqm"`
-	NetSqm           *float64  `json:"netSqm"`
-	LandShare        *float64  `json:"landShare"`
-	DuesCoefficient  float64   `json:"duesCoefficient"`
-	TitleDeedNo      *string   `json:"titleDeedNo"`
-	TitleDeedType    *string   `json:"titleDeedType"`
-	IsActive         bool      `json:"isActive"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	ID              uuid.UUID `json:"id"`
+	TenantID        uuid.UUID `json:"tenantId"`
+	SiteID          uuid.UUID `json:"siteId"`
+	BlockID         uuid.UUID `json:"blockId"`
+	UnitNumber      string    `json:"unitNumber"`
+	Floor           *int      `json:"floor"`
+	Type            string    `json:"type"` // daire | dukkan | ofis
+	GrossSqm        *float64  `json:"grossSqm"`
+	NetSqm          *float64  `json:"netSqm"`
+	LandShare       *float64  `json:"landShare"`
+	DuesCoefficient float64   `json:"duesCoefficient"`
+	TitleDeedNo     *string   `json:"titleDeedNo"`
+	TitleDeedType   *string   `json:"titleDeedType"`
+	IsActive        bool      `json:"isActive"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
 type CommonArea struct {

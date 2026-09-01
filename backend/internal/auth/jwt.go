@@ -9,10 +9,10 @@ import (
 )
 
 type AccessClaims struct {
-	UserID      uuid.UUID `json:"uid"`
-	TenantID    uuid.UUID `json:"tid"`
-	IsSuperAdmin bool     `json:"sa"`
-	Permissions []string  `json:"perms"`
+	UserID       uuid.UUID `json:"uid"`
+	TenantID     uuid.UUID `json:"tid"`
+	IsSuperAdmin bool      `json:"sa"`
+	Permissions  []string  `json:"perms"`
 	jwt.RegisteredClaims
 }
 

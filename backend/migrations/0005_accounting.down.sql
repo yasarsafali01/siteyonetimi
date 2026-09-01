@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS journal_entries;
+DROP TABLE IF EXISTS accounts;
+DROP TYPE IF EXISTS account_type;
