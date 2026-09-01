@@ -1,6 +1,10 @@
-import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Button, Card, CardActionArea, CardContent, Toolbar, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+
+const MODULES = [
+  { title: "Siteler", description: "Site, blok ve bağımsız bölüm yönetimi", path: "/sites" },
+];
 
 export function DashboardPage() {
   const { logout } = useAuth();
@@ -22,10 +26,23 @@ export function DashboardPage() {
         </Toolbar>
       </AppBar>
       <Box sx={{ p: 4 }}>
-        <Typography variant="h5">Panele hoş geldiniz</Typography>
-        <Typography color="text.secondary" sx={{ mt: 1 }}>
-          Modüller burada listelenecek.
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          Panele hoş geldiniz
         </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+          {MODULES.map((mod) => (
+            <Card key={mod.path} sx={{ width: 260 }}>
+              <CardActionArea onClick={() => navigate(mod.path)}>
+                <CardContent>
+                  <Typography variant="h6">{mod.title}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {mod.description}
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          ))}
+        </Box>
       </Box>
     </Box>
   );

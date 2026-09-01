@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS common_areas;
+DROP TABLE IF EXISTS units;
+DROP TABLE IF EXISTS blocks;
+DROP TYPE IF EXISTS unit_type;

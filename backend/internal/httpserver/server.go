@@ -10,6 +10,8 @@ import (
 
 	"siteyonetimi/backend/internal/auth"
 	"siteyonetimi/backend/internal/config"
+	"siteyonetimi/backend/internal/middleware"
+	"siteyonetimi/backend/internal/site"
 )
 
 func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
@@ -30,8 +32,15 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	authService := auth.NewService(pool, cfg)
 	authHandler := auth.NewHandler(authService)
 
+	siteService := site.NewService(pool)
+	siteHandler := site.NewHandler(siteService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
+
+	protected := api.Group("")
+	protected.Use(middleware.RequireAuth(cfg.JWTAccessSecret))
+	siteHandler.RegisterRoutes(protected)
 
 	return router
 }
