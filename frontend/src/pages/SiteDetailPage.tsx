@@ -113,6 +113,9 @@ export function SiteDetailPage() {
             <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/accounting`)}>
               Muhasebe
             </Button>
+            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/meters`)}>
+              Sayaçlar
+            </Button>
             <Button color="inherit" onClick={() => navigate("/sites")}>
               Siteler
             </Button>
