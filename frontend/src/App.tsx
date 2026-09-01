@@ -16,6 +16,8 @@ import { RequestsPage } from "./pages/RequestsPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { ProcurementPage } from "./pages/ProcurementPage";
+import { EmployeesPage } from "./pages/EmployeesPage";
+import { EmployeeDetailPage } from "./pages/EmployeeDetailPage";
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
               <Route path="maintenance" element={<MaintenancePage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="procurement" element={<ProcurementPage />} />
+              <Route path="employees" element={<EmployeesPage />} />
+              <Route path="employees/:employeeId" element={<EmployeeDetailPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
             <Route path="/persons" element={<PersonsPage />} />
