@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { label: "Sayaçlar", path: "meters" },
   { label: "Talepler", path: "requests" },
   { label: "Bakım", path: "maintenance" },
+  { label: "Demirbaş", path: "inventory" },
 ];
 
 export function SiteLayout() {
