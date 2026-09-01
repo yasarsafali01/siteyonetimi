@@ -20,6 +20,7 @@ import (
 	"siteyonetimi/backend/internal/middleware"
 	"siteyonetimi/backend/internal/procurement"
 	"siteyonetimi/backend/internal/request"
+	"siteyonetimi/backend/internal/security"
 	"siteyonetimi/backend/internal/site"
 )
 
@@ -71,6 +72,9 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	hrService := hr.NewService(pool)
 	hrHandler := hr.NewHandler(hrService)
 
+	securityService := security.NewService(pool)
+	securityHandler := security.NewHandler(securityService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
@@ -86,6 +90,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	inventoryHandler.RegisterRoutes(protected)
 	procurementHandler.RegisterRoutes(protected)
 	hrHandler.RegisterRoutes(protected)
+	securityHandler.RegisterRoutes(protected)
 
 	return router
 }

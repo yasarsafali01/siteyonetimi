@@ -18,6 +18,7 @@ import { InventoryPage } from "./pages/InventoryPage";
 import { ProcurementPage } from "./pages/ProcurementPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
 import { EmployeeDetailPage } from "./pages/EmployeeDetailPage";
+import { SecurityPage } from "./pages/SecurityPage";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="procurement" element={<ProcurementPage />} />
               <Route path="employees" element={<EmployeesPage />} />
               <Route path="employees/:employeeId" element={<EmployeeDetailPage />} />
+              <Route path="security" element={<SecurityPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
             <Route path="/persons" element={<PersonsPage />} />

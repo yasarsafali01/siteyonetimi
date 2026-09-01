@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Demirbaş", path: "inventory" },
   { label: "Satın Alma", path: "procurement" },
   { label: "Personel", path: "employees" },
+  { label: "Güvenlik", path: "security" },
 ];
 
 export function SiteLayout() {
