@@ -106,9 +106,14 @@ export function SiteDetailPage() {
       <AppBar position="static">
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6">{site?.name ?? "Site Detayı"}</Typography>
-          <Button color="inherit" onClick={() => navigate("/sites")}>
-            Siteler
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/finance`)}>
+              Finans
+            </Button>
+            <Button color="inherit" onClick={() => navigate("/sites")}>
+              Siteler
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box sx={{ p: 4 }}>

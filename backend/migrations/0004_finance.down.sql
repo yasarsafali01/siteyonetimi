@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS charges;
+DROP TYPE IF EXISTS payment_method;
+DROP TYPE IF EXISTS charge_type;

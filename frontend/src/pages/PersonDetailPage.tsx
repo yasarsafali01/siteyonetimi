@@ -14,6 +14,8 @@ import {
   powerOfAttorneys,
   vehicles,
 } from "../api/crm";
+import { getPersonBalance } from "../api/finance";
+import type { UnitBalance } from "../types/finance";
 import type {
   ContactHistoryEntry,
   EmergencyContact,
@@ -40,12 +42,13 @@ export function PersonDetailPage() {
   const [poaList, setPoaList] = useState<PowerOfAttorney[]>([]);
   const [history, setHistory] = useState<ContactHistoryEntry[]>([]);
   const [notes, setNotes] = useState<PersonNote[]>([]);
+  const [balance, setBalance] = useState<UnitBalance | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function refreshAll() {
     if (!personId) return;
     try {
-      const [p, res, fam, emg, veh, pt, poa, hist, nts] = await Promise.all([
+      const [p, res, fam, emg, veh, pt, poa, hist, nts, bal] = await Promise.all([
         getPerson(personId),
         listResidencies(personId),
         familyMembers.list(personId),
@@ -55,6 +58,7 @@ export function PersonDetailPage() {
         powerOfAttorneys.list(personId),
         listContactHistory(personId),
         listPersonNotes(personId),
+        getPersonBalance(personId),
       ]);
       setPerson(p);
       setResidencies(res);
@@ -65,6 +69,7 @@ export function PersonDetailPage() {
       setPoaList(poa);
       setHistory(hist);
       setNotes(nts);
+      setBalance(bal);
       setError(null);
     } catch {
       setError("Kişi bilgileri yüklenemedi");
@@ -96,6 +101,13 @@ export function PersonDetailPage() {
             <Typography color="text.secondary">
               {[person.phone, person.email, person.nationalId].filter(Boolean).join(" · ") || "İletişim bilgisi yok"}
             </Typography>
+            {balance && (
+              <Chip
+                sx={{ mt: 1 }}
+                label={`Kalan Bakiye: ${balance.remainingAmount.toLocaleString("tr-TR")} ₺`}
+                color={balance.remainingAmount > 0 ? "warning" : "success"}
+              />
+            )}
           </Box>
         )}
 

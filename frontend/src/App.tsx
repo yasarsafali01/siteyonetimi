@@ -8,6 +8,7 @@ import { SiteDetailPage } from "./pages/SiteDetailPage";
 import { BlockUnitsPage } from "./pages/BlockUnitsPage";
 import { PersonsPage } from "./pages/PersonsPage";
 import { PersonDetailPage } from "./pages/PersonDetailPage";
+import { SiteFinancePage } from "./pages/SiteFinancePage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/sites/:siteId/blocks/:blockId" element={<BlockUnitsPage />} />
             <Route path="/persons" element={<PersonsPage />} />
             <Route path="/persons/:personId" element={<PersonDetailPage />} />
+            <Route path="/sites/:siteId/finance" element={<SiteFinancePage />} />
           </Route>
         </Routes>
       </BrowserRouter>
