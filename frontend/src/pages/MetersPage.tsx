@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Dialog,
@@ -16,7 +15,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import { createMeter, createReading, generateInvoice, getConsumptionHistory, listMeters, listReadings } from "../api/meter";
@@ -32,7 +30,6 @@ const METER_TYPES: { value: MeterType; label: string }[] = [
 
 export function MetersPage() {
   const { siteId } = useParams<{ siteId: string }>();
-  const navigate = useNavigate();
 
   const [meters, setMeters] = useState<Meter[]>([]);
   const [unitOptions, setUnitOptions] = useState<{ id: string; label: string }[]>([]);
@@ -147,14 +144,6 @@ export function MetersPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Sayaç Yönetimi</Typography>
-          <Button color="inherit" onClick={() => navigate(`/sites/${siteId}`)}>
-            Site Detayı
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

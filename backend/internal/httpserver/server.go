@@ -13,6 +13,7 @@ import (
 	"siteyonetimi/backend/internal/config"
 	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/finance"
+	"siteyonetimi/backend/internal/maintenance"
 	"siteyonetimi/backend/internal/meter"
 	"siteyonetimi/backend/internal/middleware"
 	"siteyonetimi/backend/internal/request"
@@ -55,6 +56,9 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	requestService := request.NewService(pool)
 	requestHandler := request.NewHandler(requestService)
 
+	maintenanceService := maintenance.NewService(pool)
+	maintenanceHandler := maintenance.NewHandler(maintenanceService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
@@ -66,6 +70,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	accountingHandler.RegisterRoutes(protected)
 	meterHandler.RegisterRoutes(protected)
 	requestHandler.RegisterRoutes(protected)
+	maintenanceHandler.RegisterRoutes(protected)
 
 	return router
 }

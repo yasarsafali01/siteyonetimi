@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProtectedRoute } from "./pages/ProtectedRoute";
 import { SitesPage } from "./pages/SitesPage";
+import { SiteLayout } from "./pages/SiteLayout";
 import { SiteDetailPage } from "./pages/SiteDetailPage";
 import { BlockUnitsPage } from "./pages/BlockUnitsPage";
 import { PersonsPage } from "./pages/PersonsPage";
@@ -12,6 +13,7 @@ import { SiteFinancePage } from "./pages/SiteFinancePage";
 import { AccountingPage } from "./pages/AccountingPage";
 import { MetersPage } from "./pages/MetersPage";
 import { RequestsPage } from "./pages/RequestsPage";
+import { MaintenancePage } from "./pages/MaintenancePage";
 
 function App() {
   return (
@@ -22,14 +24,17 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/sites" element={<SitesPage />} />
-            <Route path="/sites/:siteId" element={<SiteDetailPage />} />
-            <Route path="/sites/:siteId/blocks/:blockId" element={<BlockUnitsPage />} />
+            <Route path="/sites/:siteId" element={<SiteLayout />}>
+              <Route index element={<SiteDetailPage />} />
+              <Route path="finance" element={<SiteFinancePage />} />
+              <Route path="accounting" element={<AccountingPage />} />
+              <Route path="meters" element={<MetersPage />} />
+              <Route path="requests" element={<RequestsPage />} />
+              <Route path="maintenance" element={<MaintenancePage />} />
+              <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
+            </Route>
             <Route path="/persons" element={<PersonsPage />} />
             <Route path="/persons/:personId" element={<PersonDetailPage />} />
-            <Route path="/sites/:siteId/finance" element={<SiteFinancePage />} />
-            <Route path="/sites/:siteId/accounting" element={<AccountingPage />} />
-            <Route path="/sites/:siteId/meters" element={<MetersPage />} />
-            <Route path="/sites/:siteId/requests" element={<RequestsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

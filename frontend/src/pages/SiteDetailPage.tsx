@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Dialog,
@@ -14,17 +13,15 @@ import {
   ListItemButton,
   ListItemText,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
-import { createBlock, createCommonArea, getSite, listBlocks, listCommonAreas } from "../api/sites";
-import type { Block, CommonArea, Site } from "../types/site";
+import { createBlock, createCommonArea, listBlocks, listCommonAreas } from "../api/sites";
+import type { Block, CommonArea } from "../types/site";
 
 export function SiteDetailPage() {
   const { siteId } = useParams<{ siteId: string }>();
   const navigate = useNavigate();
 
-  const [site, setSite] = useState<Site | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [areas, setAreas] = useState<CommonArea[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +39,7 @@ export function SiteDetailPage() {
   async function refresh() {
     if (!siteId) return;
     try {
-      const [siteData, blockData, areaData] = await Promise.all([
-        getSite(siteId),
-        listBlocks(siteId),
-        listCommonAreas(siteId),
-      ]);
-      setSite(siteData);
+      const [blockData, areaData] = await Promise.all([listBlocks(siteId), listCommonAreas(siteId)]);
       setBlocks(blockData);
       setAreas(areaData);
       setError(null);
@@ -103,28 +95,6 @@ export function SiteDetailPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">{site?.name ?? "Site Detayı"}</Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/finance`)}>
-              Finans
-            </Button>
-            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/accounting`)}>
-              Muhasebe
-            </Button>
-            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/meters`)}>
-              Sayaçlar
-            </Button>
-            <Button color="inherit" onClick={() => navigate(`/sites/${siteId}/requests`)}>
-              Talepler
-            </Button>
-            <Button color="inherit" onClick={() => navigate("/sites")}>
-              Siteler
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

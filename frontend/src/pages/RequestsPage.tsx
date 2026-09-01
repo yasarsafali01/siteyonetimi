@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Chip,
@@ -17,7 +16,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import {
@@ -51,7 +49,6 @@ const PRIORITY_LABELS: Record<RequestPriority, string> = { dusuk: "Düşük", no
 
 export function RequestsPage() {
   const { siteId } = useParams<{ siteId: string }>();
-  const navigate = useNavigate();
 
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
@@ -165,14 +162,6 @@ export function RequestsPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Arıza ve Talep Yönetimi</Typography>
-          <Button color="inherit" onClick={() => navigate(`/sites/${siteId}`)}>
-            Site Detayı
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

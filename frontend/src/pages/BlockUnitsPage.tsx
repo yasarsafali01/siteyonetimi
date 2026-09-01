@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Autocomplete,
   Box,
   Button,
@@ -18,7 +17,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -38,8 +36,7 @@ interface ResidentRow extends UnitResident {
 }
 
 export function BlockUnitsPage() {
-  const { siteId, blockId } = useParams<{ siteId: string; blockId: string }>();
-  const navigate = useNavigate();
+  const { blockId } = useParams<{ siteId: string; blockId: string }>();
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -142,14 +139,6 @@ export function BlockUnitsPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Bağımsız Bölümler</Typography>
-          <Button color="inherit" onClick={() => navigate(`/sites/${siteId}`)}>
-            Site Detayı
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

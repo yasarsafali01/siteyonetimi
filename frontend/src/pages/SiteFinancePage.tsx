@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Chip,
@@ -18,7 +17,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import { bulkGenerateDues, createPayment, listChargesForSite } from "../api/finance";
@@ -35,7 +33,6 @@ const CHARGE_TYPE_LABELS: Record<string, string> = {
 
 export function SiteFinancePage() {
   const { siteId } = useParams<{ siteId: string }>();
-  const navigate = useNavigate();
 
   const [charges, setCharges] = useState<ChargeWithBalance[]>([]);
   const [unitLabels, setUnitLabels] = useState<Record<string, string>>({});
@@ -118,14 +115,6 @@ export function SiteFinancePage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Finans ve Aidat</Typography>
-          <Button color="inherit" onClick={() => navigate(`/sites/${siteId}`)}>
-            Site Detayı
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

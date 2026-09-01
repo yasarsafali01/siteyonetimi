@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Dialog,
@@ -18,7 +17,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import {
@@ -51,7 +49,6 @@ function currentPeriod() {
 
 export function AccountingPage() {
   const { siteId } = useParams<{ siteId: string }>();
-  const navigate = useNavigate();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -171,14 +168,6 @@ export function AccountingPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Muhasebe</Typography>
-          <Button color="inherit" onClick={() => navigate(`/sites/${siteId}`)}>
-            Site Detayı
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
