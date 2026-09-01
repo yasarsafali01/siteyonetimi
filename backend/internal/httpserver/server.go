@@ -10,6 +10,7 @@ import (
 
 	"siteyonetimi/backend/internal/auth"
 	"siteyonetimi/backend/internal/config"
+	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/middleware"
 	"siteyonetimi/backend/internal/site"
 )
@@ -35,12 +36,16 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	siteService := site.NewService(pool)
 	siteHandler := site.NewHandler(siteService)
 
+	crmService := crm.NewService(pool)
+	crmHandler := crm.NewHandler(crmService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(cfg.JWTAccessSecret))
 	siteHandler.RegisterRoutes(protected)
+	crmHandler.RegisterRoutes(protected)
 
 	return router
 }

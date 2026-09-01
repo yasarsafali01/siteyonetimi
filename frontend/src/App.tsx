@@ -6,6 +6,8 @@ import { ProtectedRoute } from "./pages/ProtectedRoute";
 import { SitesPage } from "./pages/SitesPage";
 import { SiteDetailPage } from "./pages/SiteDetailPage";
 import { BlockUnitsPage } from "./pages/BlockUnitsPage";
+import { PersonsPage } from "./pages/PersonsPage";
+import { PersonDetailPage } from "./pages/PersonDetailPage";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
             <Route path="/sites" element={<SitesPage />} />
             <Route path="/sites/:siteId" element={<SiteDetailPage />} />
             <Route path="/sites/:siteId/blocks/:blockId" element={<BlockUnitsPage />} />
+            <Route path="/persons" element={<PersonsPage />} />
+            <Route path="/persons/:personId" element={<PersonDetailPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

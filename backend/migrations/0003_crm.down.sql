@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS person_notes;
+DROP TABLE IF EXISTS contact_history;
+DROP TABLE IF EXISTS power_of_attorneys;
+DROP TABLE IF EXISTS pets;
+DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS emergency_contacts;
+DROP TABLE IF EXISTS family_members;
+DROP TABLE IF EXISTS unit_residents;
+DROP TABLE IF EXISTS persons;
+DROP TYPE IF EXISTS resident_relation;

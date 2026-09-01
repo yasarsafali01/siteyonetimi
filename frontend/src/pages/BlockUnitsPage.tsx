@@ -3,8 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   AppBar,
+  Autocomplete,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,14 +21,21 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { createUnit, listUnits } from "../api/sites";
+import { createUnitResident, deactivateUnitResident, getPerson, listPersons, listUnitResidents } from "../api/crm";
 import type { Unit, UnitType } from "../types/site";
+import type { Person, UnitResident } from "../types/crm";
 
 const UNIT_TYPES: { value: UnitType; label: string }[] = [
   { value: "daire", label: "Daire" },
   { value: "dukkan", label: "Dükkan" },
   { value: "ofis", label: "Ofis" },
 ];
+
+interface ResidentRow extends UnitResident {
+  personName: string;
+}
 
 export function BlockUnitsPage() {
   const { siteId, blockId } = useParams<{ siteId: string; blockId: string }>();
@@ -42,6 +51,12 @@ export function BlockUnitsPage() {
   const [type, setType] = useState<UnitType>("daire");
   const [grossSqm, setGrossSqm] = useState("");
   const [duesCoefficient, setDuesCoefficient] = useState("1");
+
+  const [residentsUnit, setResidentsUnit] = useState<Unit | null>(null);
+  const [residents, setResidents] = useState<ResidentRow[]>([]);
+  const [personOptions, setPersonOptions] = useState<Person[]>([]);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [relation, setRelation] = useState<"malik" | "kiraci">("malik");
 
   async function refresh() {
     if (!blockId) return;
@@ -83,6 +98,48 @@ export function BlockUnitsPage() {
     }
   }
 
+  async function openResidents(unit: Unit) {
+    setResidentsUnit(unit);
+    setSelectedPerson(null);
+    await refreshResidents(unit.id);
+  }
+
+  async function refreshResidents(unitId: string) {
+    const list = await listUnitResidents(unitId);
+    const enriched = await Promise.all(
+      list.map(async (r) => {
+        try {
+          const p = await getPerson(r.personId);
+          return { ...r, personName: `${p.firstName} ${p.lastName}` };
+        } catch {
+          return { ...r, personName: "Bilinmiyor" };
+        }
+      })
+    );
+    setResidents(enriched);
+  }
+
+  async function handlePersonSearch(query: string) {
+    if (!query) {
+      setPersonOptions([]);
+      return;
+    }
+    setPersonOptions(await listPersons(query));
+  }
+
+  async function handleAddResident() {
+    if (!residentsUnit || !selectedPerson) return;
+    await createUnitResident(residentsUnit.id, { personId: selectedPerson.id, relation });
+    setSelectedPerson(null);
+    await refreshResidents(residentsUnit.id);
+  }
+
+  async function handleRemoveResident(id: string) {
+    if (!residentsUnit) return;
+    await deactivateUnitResident(id);
+    await refreshResidents(residentsUnit.id);
+  }
+
   return (
     <Box>
       <AppBar position="static">
@@ -114,6 +171,7 @@ export function BlockUnitsPage() {
                 <TableCell>Tür</TableCell>
                 <TableCell>Brüt m²</TableCell>
                 <TableCell>Aidat Katsayısı</TableCell>
+                <TableCell>Sakinler</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -124,6 +182,11 @@ export function BlockUnitsPage() {
                   <TableCell>{UNIT_TYPES.find((t) => t.value === unit.type)?.label ?? unit.type}</TableCell>
                   <TableCell>{unit.grossSqm ?? "-"}</TableCell>
                   <TableCell>{unit.duesCoefficient}</TableCell>
+                  <TableCell>
+                    <Button size="small" onClick={() => openResidents(unit)}>
+                      Yönet
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -160,6 +223,45 @@ export function BlockUnitsPage() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog open={Boolean(residentsUnit)} onClose={() => setResidentsUnit(null)} fullWidth maxWidth="sm">
+        <DialogTitle>{residentsUnit?.unitNumber} No'lu Bağımsız Bölüm — Sakinler</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+            {residents.length === 0 && <Typography color="text.secondary">Henüz sakin atanmadı.</Typography>}
+            {residents.map((r) => (
+              <Chip
+                key={r.id}
+                label={`${r.relation === "malik" ? "Malik" : "Kiracı"}: ${r.personName}`}
+                onDelete={() => handleRemoveResident(r.id)}
+                deleteIcon={<DeleteIcon />}
+              />
+            ))}
+          </Box>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            <Autocomplete
+              sx={{ flexGrow: 1 }}
+              options={personOptions}
+              getOptionLabel={(p) => `${p.firstName} ${p.lastName}`}
+              value={selectedPerson}
+              onChange={(_, value) => setSelectedPerson(value)}
+              onInputChange={(_, value) => handlePersonSearch(value)}
+              renderInput={(params) => <TextField {...params} label="Kişi Ara" size="small" />}
+              isOptionEqualToValue={(a, b) => a.id === b.id}
+            />
+            <TextField select label="İlişki" size="small" value={relation} onChange={(e) => setRelation(e.target.value as "malik" | "kiraci")} sx={{ width: 140 }}>
+              <MenuItem value="malik">Malik</MenuItem>
+              <MenuItem value="kiraci">Kiracı</MenuItem>
+            </TextField>
+            <Button variant="outlined" onClick={handleAddResident} disabled={!selectedPerson}>
+              Ekle
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResidentsUnit(null)}>Kapat</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
