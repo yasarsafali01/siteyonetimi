@@ -10,6 +10,7 @@ import (
 )
 
 var ErrNotFound = errors.New("kayıt bulunamadı")
+var ErrManagerIneligible = errors.New("bu kullanıcı site yöneticisi olarak atanamaz — kullanıcı tipi 'yonetici' olmalı")
 
 type Service struct {
 	pool *pgxpool.Pool
@@ -50,6 +51,112 @@ func (s *Service) ListSites(ctx context.Context, tenantID uuid.UUID) ([]Site, er
 		sites = append(sites, st)
 	}
 	return sites, rows.Err()
+}
+
+// ListAccessibleSites, süper adminler için tüm siteleri; site yöneticisi olarak
+// atanmış "yonetici" kullanıcılar için ise yalnızca kendilerine atanan siteleri döner.
+func (s *Service) ListAccessibleSites(ctx context.Context, tenantID, userID uuid.UUID, isSuperAdmin bool) ([]Site, error) {
+	if isSuperAdmin {
+		return s.ListSites(ctx, tenantID)
+	}
+
+	rows, err := s.pool.Query(ctx,
+		`SELECT s.id, s.tenant_id, s.name, s.address, s.is_active, s.created_at, s.updated_at
+		 FROM sites s
+		 JOIN site_managers sm ON sm.site_id = s.id
+		 WHERE s.tenant_id = $1 AND sm.user_id = $2
+		 ORDER BY s.name`, tenantID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	sites := []Site{}
+	for rows.Next() {
+		var st Site
+		if err := rows.Scan(&st.ID, &st.TenantID, &st.Name, &st.Address, &st.IsActive, &st.CreatedAt, &st.UpdatedAt); err != nil {
+			return nil, err
+		}
+		sites = append(sites, st)
+	}
+	return sites, rows.Err()
+}
+
+// UserHasSiteAccess, verilen kullanıcının bu siteye erişim yetkisi olup olmadığını döner.
+// Çağıran taraf süper admin/sakin durumlarını ayrıca kontrol etmelidir — bu metod sadece
+// site_managers atamasına bakar.
+func (s *Service) UserHasSiteAccess(ctx context.Context, tenantID, userID, siteID uuid.UUID) (bool, error) {
+	var exists bool
+	err := s.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM site_managers WHERE tenant_id = $1 AND user_id = $2 AND site_id = $3)`,
+		tenantID, userID, siteID,
+	).Scan(&exists)
+	return exists, err
+}
+
+// --- Site Managers ---
+
+func (s *Service) ListManagers(ctx context.Context, tenantID, siteID uuid.UUID) ([]Manager, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT u.id, u.email, u.full_name
+		 FROM site_managers sm
+		 JOIN users u ON u.id = sm.user_id
+		 WHERE sm.tenant_id = $1 AND sm.site_id = $2
+		 ORDER BY u.full_name`, tenantID, siteID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	managers := []Manager{}
+	for rows.Next() {
+		var m Manager
+		if err := rows.Scan(&m.UserID, &m.Email, &m.FullName); err != nil {
+			return nil, err
+		}
+		managers = append(managers, m)
+	}
+	return managers, rows.Err()
+}
+
+func (s *Service) AddManager(ctx context.Context, tenantID, siteID, userID uuid.UUID) error {
+	var userType string
+	var isSuperAdmin bool
+	err := s.pool.QueryRow(ctx,
+		`SELECT user_type, is_super_admin FROM users WHERE id = $1 AND tenant_id = $2`, userID, tenantID,
+	).Scan(&userType, &isSuperAdmin)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if userType != "yonetici" || isSuperAdmin {
+		return ErrManagerIneligible
+	}
+
+	_, err = s.pool.Exec(ctx,
+		`INSERT INTO site_managers (tenant_id, site_id, user_id) VALUES ($1, $2, $3)
+		 ON CONFLICT (site_id, user_id) DO NOTHING`,
+		tenantID, siteID, userID,
+	)
+	return err
+}
+
+func (s *Service) RemoveManager(ctx context.Context, tenantID, siteID, userID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM site_managers WHERE tenant_id = $1 AND site_id = $2 AND user_id = $3`,
+		tenantID, siteID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (s *Service) GetSite(ctx context.Context, tenantID, siteID uuid.UUID) (Site, error) {

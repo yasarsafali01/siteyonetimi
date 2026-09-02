@@ -6,14 +6,17 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   List,
+  ListItem,
   ListItemButton,
   ListItemText,
+  MenuItem,
   Paper,
   TextField,
   Typography,
@@ -22,12 +25,15 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import { createBlock, createCommonArea, listBlocks, listCommonAreas } from "../api/sites";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { addManager, createBlock, createCommonArea, listBlocks, listCommonAreas, listManagers, removeManager } from "../api/sites";
 import { getDashboard } from "../api/reporting";
 import { getMonthlyIncomeExpense } from "../api/accounting";
+import { listUsers } from "../api/users";
 import { IncomeExpenseChart, type MonthlyIncomeExpense } from "../components/IncomeExpenseChart";
-import type { Block, CommonArea } from "../types/site";
+import type { Block, CommonArea, SiteManager } from "../types/site";
 import type { Dashboard } from "../types/reporting";
+import type { AppUser } from "../types/user";
 
 function formatCurrency(n: number) {
   return n.toLocaleString("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
@@ -69,6 +75,9 @@ export function SiteDetailPage() {
   const [areas, setAreas] = useState<CommonArea[]>([]);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [monthly, setMonthly] = useState<MonthlyIncomeExpense[]>([]);
+  const [managers, setManagers] = useState<SiteManager[]>([]);
+  const [eligibleUsers, setEligibleUsers] = useState<AppUser[]>([]);
+  const [newManagerId, setNewManagerId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
@@ -84,19 +93,44 @@ export function SiteDetailPage() {
   async function refresh() {
     if (!siteId) return;
     try {
-      const [blockData, areaData, dash, monthlyData] = await Promise.all([
+      const [blockData, areaData, dash, monthlyData, managerData, userData] = await Promise.all([
         listBlocks(siteId),
         listCommonAreas(siteId),
         getDashboard(siteId),
         getMonthlyIncomeExpense(siteId, 6),
+        listManagers(siteId),
+        listUsers(),
       ]);
       setBlocks(blockData);
       setAreas(areaData);
       setDashboard(dash);
       setMonthly(monthlyData);
+      setManagers(managerData);
+      setEligibleUsers(userData.filter((u) => u.userType === "yonetici" && !u.isSuperAdmin));
       setError(null);
     } catch {
       setError("Site bilgileri yüklenemedi");
+    }
+  }
+
+  async function handleAddManager() {
+    if (!siteId || !newManagerId) return;
+    try {
+      await addManager(siteId, newManagerId);
+      setNewManagerId("");
+      await refresh();
+    } catch {
+      setError("Yönetici atanamadı");
+    }
+  }
+
+  async function handleRemoveManager(userId: string) {
+    if (!siteId) return;
+    try {
+      await removeManager(siteId, userId);
+      await refresh();
+    } catch {
+      setError("Yönetici kaldırılamadı");
     }
   }
 
@@ -182,6 +216,57 @@ export function SiteDetailPage() {
         <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>Gelir / Gider (Son 6 Ay)</Typography>
           <IncomeExpenseChart data={monthly} />
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>Site Yöneticileri</Typography>
+          {managers.length === 0 ? (
+            <Typography color="text.secondary" sx={{ mb: 2 }}>
+              Bu siteye atanmış yönetici yok — süper admin dışında kimse bu siteyi göremez.
+            </Typography>
+          ) : (
+            <List sx={{ mb: 1 }}>
+              {managers.map((m) => (
+                <ListItem
+                  key={m.userId}
+                  secondaryAction={
+                    <Button size="small" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => handleRemoveManager(m.userId)}>
+                      Kaldır
+                    </Button>
+                  }
+                >
+                  <ListItemText primary={m.fullName} secondary={m.email} />
+                  <Chip label="Yönetici" size="small" variant="outlined" sx={{ mr: 2 }} />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+            <TextField
+              select
+              size="small"
+              label="Kullanıcı Seç"
+              value={newManagerId}
+              onChange={(e) => setNewManagerId(e.target.value)}
+              sx={{ minWidth: 240 }}
+            >
+              {eligibleUsers
+                .filter((u) => !managers.some((m) => m.userId === u.id))
+                .map((u) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.fullName} ({u.email})
+                  </MenuItem>
+                ))}
+            </TextField>
+            <Button variant="outlined" disabled={!newManagerId} onClick={handleAddManager}>
+              Yönetici Ata
+            </Button>
+          </Box>
+          {eligibleUsers.length === 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+              Atanabilecek kullanıcı yok — önce "Kullanıcılar" sayfasından bir yönetici hesabı oluşturun.
+            </Typography>
+          )}
         </Paper>
 
         <Grid container spacing={4}>

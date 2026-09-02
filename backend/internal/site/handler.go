@@ -38,12 +38,28 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/sites/:siteId/common-areas", h.listCommonAreas)
 	rg.POST("/sites/:siteId/common-areas", h.createCommonArea)
 	rg.DELETE("/common-areas/:areaId", h.deactivateCommonArea)
+
+	rg.GET("/sites/:siteId/managers", h.listManagers)
+	rg.POST("/sites/:siteId/managers", h.addManager)
+	rg.DELETE("/sites/:siteId/managers/:userId", h.removeManager)
 }
 
 func tenantID(c *gin.Context) uuid.UUID {
 	v, _ := c.Get(middleware.ContextKeyTenantID)
 	id, _ := v.(uuid.UUID)
 	return id
+}
+
+func currentUserID(c *gin.Context) uuid.UUID {
+	v, _ := c.Get(middleware.ContextKeyUserID)
+	id, _ := v.(uuid.UUID)
+	return id
+}
+
+func isSuperAdmin(c *gin.Context) bool {
+	v, _ := c.Get(middleware.ContextKeyIsSuperAdmin)
+	sa, _ := v.(bool)
+	return sa
 }
 
 func handleServiceError(c *gin.Context, err error) {
@@ -77,7 +93,7 @@ func (h *Handler) createSite(c *gin.Context) {
 }
 
 func (h *Handler) listSites(c *gin.Context) {
-	result, err := h.service.ListSites(c.Request.Context(), tenantID(c))
+	result, err := h.service.ListAccessibleSites(c.Request.Context(), tenantID(c), currentUserID(c), isSuperAdmin(c))
 	if err != nil {
 		handleServiceError(c, err)
 		return
@@ -369,6 +385,66 @@ func (h *Handler) deactivateCommonArea(c *gin.Context) {
 		return
 	}
 	if err := h.service.DeactivateCommonArea(c.Request.Context(), tenantID(c), areaID); err != nil {
+		handleServiceError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+// --- Site Managers ---
+
+func (h *Handler) listManagers(c *gin.Context) {
+	siteID, err := uuid.Parse(c.Param("siteId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "geçersiz site id"})
+		return
+	}
+	result, err := h.service.ListManagers(c.Request.Context(), tenantID(c), siteID)
+	if err != nil {
+		handleServiceError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+type addManagerRequest struct {
+	UserID uuid.UUID `json:"userId" binding:"required"`
+}
+
+func (h *Handler) addManager(c *gin.Context) {
+	siteID, err := uuid.Parse(c.Param("siteId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "geçersiz site id"})
+		return
+	}
+	var req addManagerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.AddManager(c.Request.Context(), tenantID(c), siteID, req.UserID); err != nil {
+		if errors.Is(err, ErrManagerIneligible) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		handleServiceError(c, err)
+		return
+	}
+	c.Status(http.StatusCreated)
+}
+
+func (h *Handler) removeManager(c *gin.Context) {
+	siteID, err := uuid.Parse(c.Param("siteId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "geçersiz site id"})
+		return
+	}
+	userID, err := uuid.Parse(c.Param("userId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "geçersiz kullanıcı id"})
+		return
+	}
+	if err := h.service.RemoveManager(c.Request.Context(), tenantID(c), siteID, userID); err != nil {
 		handleServiceError(c, err)
 		return
 	}

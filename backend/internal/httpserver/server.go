@@ -120,6 +120,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(cfg.JWTAccessSecret))
+	protected.Use(site.RequireSiteAccess(siteService))
 	authHandler.RegisterProtectedRoutes(protected.Group("/auth"))
 	siteHandler.RegisterRoutes(protected)
 	crmHandler.RegisterRoutes(protected)

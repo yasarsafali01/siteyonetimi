@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { Block, CommonArea, Site, Unit, UnitType } from "../types/site";
+import type { Block, CommonArea, Site, SiteManager, Unit, UnitType } from "../types/site";
 
 export async function listSites() {
   const { data } = await apiClient.get<Site[]>("/sites");
@@ -56,4 +56,17 @@ export async function listCommonAreas(siteId: string) {
 export async function createCommonArea(siteId: string, input: { name: string; description?: string; areaSqm?: number }) {
   const { data } = await apiClient.post<CommonArea>(`/sites/${siteId}/common-areas`, input);
   return data;
+}
+
+export async function listManagers(siteId: string) {
+  const { data } = await apiClient.get<SiteManager[]>(`/sites/${siteId}/managers`);
+  return data;
+}
+
+export async function addManager(siteId: string, userId: string) {
+  await apiClient.post(`/sites/${siteId}/managers`, { userId });
+}
+
+export async function removeManager(siteId: string, userId: string) {
+  await apiClient.delete(`/sites/${siteId}/managers/${userId}`);
 }

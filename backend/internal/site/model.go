@@ -46,6 +46,14 @@ type Unit struct {
 	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
+// Manager, bir siteye atanmış yönetici kullanıcının site listesinde göstermeye
+// yetecek özet bilgisidir.
+type Manager struct {
+	UserID   uuid.UUID `json:"userId"`
+	Email    string    `json:"email"`
+	FullName string    `json:"fullName"`
+}
+
 type CommonArea struct {
 	ID          uuid.UUID `json:"id"`
 	TenantID    uuid.UUID `json:"tenantId"`

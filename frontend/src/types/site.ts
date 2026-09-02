@@ -40,6 +40,12 @@ export interface Unit {
   updatedAt: string;
 }
 
+export interface SiteManager {
+  userId: string;
+  email: string;
+  fullName: string;
+}
+
 export interface CommonArea {
   id: string;
   tenantId: string;

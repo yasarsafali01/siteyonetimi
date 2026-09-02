@@ -7,15 +7,18 @@ import { StatCard } from "../../../src/components/ui/StatCard";
 import { AppButton } from "../../../src/components/ui/AppButton";
 import { FormField } from "../../../src/components/ui/FormField";
 import { FormSheet } from "../../../src/components/ui/FormSheet";
+import { SelectField } from "../../../src/components/ui/SelectField";
 import { ListRow, EmptyState } from "../../../src/components/ui/ListRow";
 import { IncomeExpenseChart } from "../../../src/components/ui/IncomeExpenseChart";
 import { colors } from "../../../src/theme";
-import { createBlock, createCommonArea, listBlocks, listCommonAreas } from "../../../src/api/sites";
+import { addManager, createBlock, createCommonArea, listBlocks, listCommonAreas, listManagers, removeManager } from "../../../src/api/sites";
 import { getDashboard } from "../../../src/api/reporting";
 import { getMonthlyIncomeExpense } from "../../../src/api/accounting";
-import type { Block, CommonArea } from "../../../src/types/site";
+import { listUsers } from "../../../src/api/users";
+import type { Block, CommonArea, SiteManager } from "../../../src/types/site";
 import type { Dashboard } from "../../../src/types/reporting";
 import type { MonthlyIncomeExpense } from "../../../src/types/accounting";
+import type { AppUser } from "../../../src/types/user";
 
 function formatCurrency(n: number) {
   return `${n.toLocaleString("tr-TR")} ₺`;
@@ -29,6 +32,9 @@ export default function SiteOverviewScreen() {
   const [areas, setAreas] = useState<CommonArea[]>([]);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [monthly, setMonthly] = useState<MonthlyIncomeExpense[]>([]);
+  const [managers, setManagers] = useState<SiteManager[]>([]);
+  const [eligibleUsers, setEligibleUsers] = useState<AppUser[]>([]);
+  const [newManagerId, setNewManagerId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,21 +50,46 @@ export default function SiteOverviewScreen() {
   async function refresh() {
     if (!siteId) return;
     try {
-      const [blockData, areaData, dash, monthlyData] = await Promise.all([
+      const [blockData, areaData, dash, monthlyData, managerData, userData] = await Promise.all([
         listBlocks(siteId),
         listCommonAreas(siteId),
         getDashboard(siteId),
         getMonthlyIncomeExpense(siteId, 6),
+        listManagers(siteId),
+        listUsers(),
       ]);
       setBlocks(blockData);
       setAreas(areaData);
       setDashboard(dash);
       setMonthly(monthlyData);
+      setManagers(managerData);
+      setEligibleUsers(userData.filter((u) => u.userType === "yonetici" && !u.isSuperAdmin));
       setError(null);
     } catch {
       setError("Site bilgileri yüklenemedi");
     } finally {
       setRefreshing(false);
+    }
+  }
+
+  async function handleAddManager() {
+    if (!siteId || !newManagerId) return;
+    try {
+      await addManager(siteId, newManagerId);
+      setNewManagerId("");
+      await refresh();
+    } catch {
+      setError("Yönetici atanamadı");
+    }
+  }
+
+  async function handleRemoveManager(userId: string) {
+    if (!siteId) return;
+    try {
+      await removeManager(siteId, userId);
+      await refresh();
+    } catch {
+      setError("Yönetici kaldırılamadı");
     }
   }
 
@@ -111,6 +142,35 @@ export default function SiteOverviewScreen() {
         <Text style={styles.sectionTitle}>Gelir / Gider (Son 6 Ay)</Text>
         <IncomeExpenseChart data={monthly} />
       </Card>
+
+      <Text style={styles.sectionTitle}>Site Yöneticileri</Text>
+      {managers.length === 0 ? (
+        <EmptyState text="Bu siteye atanmış yönetici yok — süper admin dışında kimse bu siteyi göremez." />
+      ) : (
+        <Card style={{ padding: 0, marginBottom: 12 }}>
+          {managers.map((m) => (
+            <ListRow
+              key={m.userId}
+              title={m.fullName}
+              subtitle={m.email}
+              right={<AppButton small variant="text" color="error" label="Kaldır" onPress={() => handleRemoveManager(m.userId)} />}
+            />
+          ))}
+        </Card>
+      )}
+      {eligibleUsers.filter((u) => !managers.some((m) => m.userId === u.id)).length > 0 && (
+        <View style={{ marginBottom: 20 }}>
+          <SelectField
+            label="Yönetici Ata"
+            value={newManagerId}
+            onChange={setNewManagerId}
+            options={eligibleUsers
+              .filter((u) => !managers.some((m) => m.userId === u.id))
+              .map((u) => ({ value: u.id, label: `${u.fullName} (${u.email})` }))}
+          />
+          <AppButton small variant="outlined" label="Ata" onPress={handleAddManager} disabled={!newManagerId} />
+        </View>
+      )}
 
       <View style={styles.rowHeader}>
         <Text style={styles.sectionTitle}>Bloklar</Text>
