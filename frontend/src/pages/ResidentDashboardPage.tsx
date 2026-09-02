@@ -1,8 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Card,
@@ -19,10 +17,10 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
-import { useAuth } from "../auth/AuthContext";
+import HomeIcon from "@mui/icons-material/Home";
+import { AppShell, type ShellNavItem } from "../components/AppShell";
 import { getMe } from "../api/me";
 import { getPersonBalance, listChargesForUnit } from "../api/finance";
 import { createRequest, listRequests } from "../api/request";
@@ -67,10 +65,9 @@ const INVITATION_STATUS_LABELS: Record<string, string> = {
   iptal: "İptal",
 };
 
-export function ResidentDashboardPage() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+const NAV_ITEMS: ShellNavItem[] = [{ label: "Panelim", path: "/resident", icon: <HomeIcon fontSize="small" />, end: true }];
 
+export function ResidentDashboardPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [activeResidency, setActiveResidency] = useState<Residency | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -139,11 +136,6 @@ export function ResidentDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeResidency, me?.personId]);
 
-  function handleLogout() {
-    logout();
-    navigate("/");
-  }
-
   function areaName(id: string) {
     return commonAreas.find((a) => a.id === id)?.name ?? id.slice(0, 8);
   }
@@ -207,16 +199,11 @@ export function ResidentDashboardPage() {
   }
 
   return (
-    <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Sakin Paneli{me ? ` — ${me.fullName}` : ""}</Typography>
-          <Button color="inherit" onClick={handleLogout}>
-            Çıkış Yap
-          </Button>
-        </Toolbar>
-      </AppBar>
-
+    <AppShell
+      title="Sakin Paneli"
+      subtitle={activeResidency ? `${activeResidency.siteName} — ${activeResidency.blockName} / ${activeResidency.unitNumber}` : undefined}
+      navItems={NAV_ITEMS}
+    >
       <Box sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -245,10 +232,13 @@ export function ResidentDashboardPage() {
 
         {activeResidency && (
           <>
-            <Typography color="text.secondary" sx={{ mb: 2 }}>
-              {activeResidency.siteName} — {activeResidency.blockName} / {activeResidency.unitNumber} (
-              {activeResidency.relation === "malik" ? "Malik" : "Kiracı"})
-            </Typography>
+            <Chip
+              size="small"
+              label={activeResidency.relation === "malik" ? "Malik" : "Kiracı"}
+              color="primary"
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
 
             <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
               <Card variant="outlined" sx={{ minWidth: 200 }}>
@@ -477,6 +467,6 @@ export function ResidentDashboardPage() {
           </DialogActions>
         </Box>
       </Dialog>
-    </Box>
+    </AppShell>
   );
 }

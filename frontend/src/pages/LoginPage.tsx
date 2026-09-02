@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import { useAuth } from "../auth/AuthContext";
 import { getCurrentUserType } from "../api/client";
 
@@ -33,13 +34,34 @@ export function LoginPage() {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        bgcolor: "#f5f5f5",
+        px: 2,
+        background: "linear-gradient(135deg, #eef2ff 0%, #f8fafc 55%, #f0f9ff 100%)",
       }}
     >
-      <Paper elevation={3} sx={{ p: 4, width: 360 }}>
-        <Typography variant="h5" sx={{ mb: 3, textAlign: "center" }}>
-          Site Yönetim Platformu
-        </Typography>
+      <Paper variant="outlined" sx={{ p: 5, width: 380, borderRadius: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
+          <Box
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: 2.5,
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
+            <ApartmentIcon />
+          </Box>
+          <Typography variant="h5" sx={{ textAlign: "center" }}>
+            Site Yönetim Platformu
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Hesabınızla giriş yapın
+          </Typography>
+        </Box>
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -52,6 +74,7 @@ export function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             fullWidth
+            autoFocus
           />
           <TextField
             label="Şifre"
@@ -62,7 +85,7 @@ export function LoginPage() {
             fullWidth
           />
           {error && <Alert severity="error">{error}</Alert>}
-          <Button type="submit" variant="contained" size="large" disabled={submitting}>
+          <Button type="submit" variant="contained" size="large" disabled={submitting} sx={{ py: 1.2 }}>
             Giriş Yap
           </Button>
         </Box>

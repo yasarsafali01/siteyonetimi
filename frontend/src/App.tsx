@@ -31,6 +31,7 @@ import { LegalPage } from "./pages/LegalPage";
 import { ReportingPage } from "./pages/ReportingPage";
 import { UsersPage } from "./pages/UsersPage";
 import { ResidentDashboardPage } from "./pages/ResidentDashboardPage";
+import { MainLayout } from "./pages/MainLayout";
 
 function App() {
   return (
@@ -39,8 +40,13 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/sites" element={<SitesPage />} />
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/sites" element={<SitesPage />} />
+              <Route path="/persons" element={<PersonsPage />} />
+              <Route path="/persons/:personId" element={<PersonDetailPage />} />
+              <Route path="/users" element={<UsersPage />} />
+            </Route>
             <Route path="/sites/:siteId" element={<SiteLayout />}>
               <Route index element={<SiteDetailPage />} />
               <Route path="finance" element={<SiteFinancePage />} />
@@ -65,9 +71,6 @@ function App() {
               <Route path="reports" element={<ReportingPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
-            <Route path="/persons" element={<PersonsPage />} />
-            <Route path="/persons/:personId" element={<PersonDetailPage />} />
-            <Route path="/users" element={<UsersPage />} />
             <Route path="/resident" element={<ResidentDashboardPage />} />
           </Route>
         </Routes>

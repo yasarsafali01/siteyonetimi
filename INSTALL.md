@@ -58,7 +58,7 @@ npm install
 npm run dev
 ```
 
-`http://localhost:5173` (dolu ise Vite otomatik başka porta geçer, örn. 5174 — bu durumda backend'in `CORS_ALLOWED_ORIGINS` değerine o portu eklemeyi unutma).
+`http://localhost:5173` — port `vite.config.ts`'de sabitlendi (`strictPort: true`); 5173 doluysa Vite başka porta kaymaz, hata verip durur. Böyle bir hata alırsan 5173'ü tutan eski bir `npm run dev` sürecini kapatman gerekiyor demektir.
 
 ## 4. Mobil (React Native / Expo)
 

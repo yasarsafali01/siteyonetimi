@@ -2,20 +2,21 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
+  Card,
+  CardActionArea,
+  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  List,
-  ListItemButton,
-  ListItemText,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import PlaceIcon from "@mui/icons-material/Place";
 import { createSite, listSites } from "../api/sites";
 import type { Site } from "../types/site";
 
@@ -62,36 +63,51 @@ export function SitesPage() {
   }
 
   return (
-    <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Siteler</Typography>
-          <Button color="inherit" onClick={() => navigate("/dashboard")}>
-            Panele Dön
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Box sx={{ p: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h5">Site Listesi</Typography>
-          <Button variant="contained" onClick={() => setDialogOpen(true)}>
-            Yeni Site
-          </Button>
-        </Box>
+    <Box sx={{ p: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h5">Site Listesi</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+          Yeni Site
+        </Button>
+      </Box>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        {!loading && sites.length === 0 && (
-          <Typography color="text.secondary">Henüz site eklenmedi.</Typography>
-        )}
+      {!loading && sites.length === 0 && (
+        <Typography color="text.secondary">Henüz site eklenmedi.</Typography>
+      )}
 
-        <List>
-          {sites.map((site) => (
-            <ListItemButton key={site.id} onClick={() => navigate(`/sites/${site.id}`)}>
-              <ListItemText primary={site.name} secondary={site.address ?? undefined} />
-            </ListItemButton>
-          ))}
-        </List>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2.5 }}>
+        {sites.map((site) => (
+          <Card key={site.id} sx={{ width: 280 }}>
+            <CardActionArea onClick={() => navigate(`/sites/${site.id}`)} sx={{ p: 1 }}>
+              <CardContent>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    bgcolor: "primary.light",
+                    color: "primary.contrastText",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                  }}
+                >
+                  <ApartmentIcon fontSize="small" />
+                </Box>
+                <Typography variant="h6" noWrap>{site.name}</Typography>
+                {site.address && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5, color: "text.secondary" }}>
+                    <PlaceIcon fontSize="inherit" />
+                    <Typography variant="body2" noWrap>{site.address}</Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        ))}
       </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">

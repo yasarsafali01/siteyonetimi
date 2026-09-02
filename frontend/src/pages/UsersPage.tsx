@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Alert,
-  AppBar,
+  Avatar,
   Box,
   Button,
   Chip,
@@ -11,22 +10,22 @@ import {
   DialogContent,
   DialogTitle,
   MenuItem,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { createUser, listUsers } from "../api/users";
 import type { AppUser, UserType } from "../types/user";
 
 const TYPE_LABELS: Record<UserType, string> = { yonetici: "Yönetici", sakin: "Sakin" };
 
 export function UsersPage() {
-  const navigate = useNavigate();
 
   const [users, setUsers] = useState<AppUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -78,53 +77,64 @@ export function UsersPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">Kullanıcılar</Typography>
-          <Button color="inherit" onClick={() => navigate("/dashboard")}>
-            Panele Dön
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 2 }}>
+          <Typography variant="h5">Kullanıcılar</Typography>
+          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setDialogOpen(true)}>
+            Yeni Kullanıcı
+          </Button>
+        </Box>
+
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
+        <Typography color="text.secondary" sx={{ mb: 3 }}>
           Yönetici hesapları web panelinin tamamına erişebilir. Sakin hesapları bir kişiye (kat maliki/kiracı) bağlıdır
           ve sadece kendi bağımsız bölümlerine ait borç/talep/rezervasyon/ziyaretçi verilerine erişebilir — sakin için
           giriş hesabı açmanın en kolay yolu ilgili kişinin detay sayfasındaki "Sakin Giriş Hesabı Oluştur" butonudur.
         </Typography>
 
-        <Button variant="contained" sx={{ mb: 2 }} onClick={() => setDialogOpen(true)}>
-          Yeni Kullanıcı
-        </Button>
-
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Ad Soyad</TableCell>
-              <TableCell>E-posta</TableCell>
-              <TableCell>Tip</TableCell>
-              <TableCell>Durum</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>{u.fullName}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={u.isSuperAdmin ? "Süper Admin" : TYPE_LABELS[u.userType]}
-                    color={u.userType === "yonetici" ? "primary" : "default"}
-                  />
-                </TableCell>
-                <TableCell>{u.isActive ? "Aktif" : "Pasif"}</TableCell>
+        <Paper variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Kullanıcı</TableCell>
+                <TableCell>E-posta</TableCell>
+                <TableCell>Tip</TableCell>
+                <TableCell>Durum</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id} hover>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 28, height: 28, fontSize: 13, bgcolor: "secondary.main" }}>
+                        {u.fullName
+                          .split(" ")
+                          .map((p) => p[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase()}
+                      </Avatar>
+                      {u.fullName}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={u.isSuperAdmin ? "Süper Admin" : TYPE_LABELS[u.userType]}
+                      color={u.userType === "yonetici" ? "primary" : "default"}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={u.isActive ? "Aktif" : "Pasif"} color={u.isActive ? "success" : "default"} variant="outlined" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
       </Box>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">

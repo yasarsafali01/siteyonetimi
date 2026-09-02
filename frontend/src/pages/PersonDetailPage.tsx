@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
-  AppBar,
   Box,
   Button,
   Chip,
@@ -11,9 +10,9 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  Toolbar,
   Typography,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   createContactHistory,
   createPersonNote,
@@ -125,15 +124,14 @@ export function PersonDetailPage() {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">{person ? `${person.firstName} ${person.lastName}` : "Kişi Detayı"}</Typography>
-          <Button color="inherit" onClick={() => navigate("/persons")}>
-            Kişiler
-          </Button>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ p: 4, maxWidth: 720 }}>
+        <Button size="small" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate("/persons")} sx={{ mb: 1 }}>
+          Kişiler
+        </Button>
+        <Typography variant="h5" sx={{ mb: 2 }}>
+          {person ? `${person.firstName} ${person.lastName}` : "Kişi Detayı"}
+        </Typography>
+
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         {person && (
