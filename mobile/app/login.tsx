@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../src/auth/AuthContext";
 import { AppButton } from "../src/components/ui/AppButton";
 import { FormField } from "../src/components/ui/FormField";
-import { colors, radius } from "../src/theme";
+import { colors, radius, shadow } from "../src/theme";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -53,23 +53,30 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    padding: 24,
+    padding: 28,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadow.md,
   },
   logo: {
-    width: 52,
-    height: 52,
+    width: 56,
+    height: 56,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    marginBottom: 14,
+    marginBottom: 16,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   title: {
-    fontSize: 19,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.3,
     textAlign: "center",
     color: colors.textPrimary,
   },

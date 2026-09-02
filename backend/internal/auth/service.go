@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -13,6 +14,13 @@ import (
 
 	"siteyonetimi/backend/internal/config"
 )
+
+// normalizeEmail, e-postaları büyük/küçük harf duyarsız ve baştaki/sondaki
+// boşluklardan arındırılmış şekilde saklamak/karşılaştırmak için kullanılır.
+// Şifreler bilinçli olarak büyük/küçük harfe duyarlı kalır — bu, parolalar için normaldir.
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
 
 var ErrInvalidCredentials = errors.New("e-posta veya şifre hatalı")
 var ErrInvalidRefreshToken = errors.New("geçersiz veya süresi dolmuş refresh token")
@@ -33,6 +41,7 @@ type TokenPair struct {
 
 // RegisterTenant yeni bir yönetim şirketi (tenant) ve o şirketin ilk süper admin kullanıcısını oluşturur.
 func (s *Service) RegisterTenant(ctx context.Context, companyName, email, password, fullName string) (uuid.UUID, error) {
+	email = normalizeEmail(email)
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return uuid.Nil, err
@@ -69,7 +78,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (TokenPair,
 	var u User
 	err := s.pool.QueryRow(ctx,
 		`SELECT id, tenant_id, email, password_hash, full_name, is_super_admin, is_active, user_type, person_id
-		 FROM users WHERE email = $1`, email,
+		 FROM users WHERE lower(email) = $1`, normalizeEmail(email),
 	).Scan(&u.ID, &u.TenantID, &u.Email, &u.PasswordHash, &u.FullName, &u.IsSuperAdmin, &u.IsActive, &u.UserType, &u.PersonID)
 	if err != nil {
 		return TokenPair{}, ErrInvalidCredentials
@@ -236,6 +245,7 @@ var ErrEmailTaken = errors.New("bu e-posta zaten kullanılıyor")
 // personID zorunludur ve o kişi adına daha önce hesap açılmamış olmalıdır — bu,
 // bir kat malikinin/kiracının kendi hesabıyla giriş yapabilmesini sağlar.
 func (s *Service) CreateUser(ctx context.Context, tenantID uuid.UUID, email, password, fullName, userType string, personID *uuid.UUID) (User, error) {
+	email = normalizeEmail(email)
 	if userType == "sakin" {
 		if personID == nil {
 			return User{}, ErrPersonNotFound

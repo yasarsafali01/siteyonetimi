@@ -71,10 +71,11 @@ export function LoginPage() {
             label="E-posta"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value.trim())}
             required
             fullWidth
             autoFocus
+            slotProps={{ htmlInput: { autoCapitalize: "none", autoCorrect: "off", spellCheck: false } }}
           />
           <TextField
             label="Şifre"
