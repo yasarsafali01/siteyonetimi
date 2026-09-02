@@ -20,6 +20,12 @@ import { EmployeesPage } from "./pages/EmployeesPage";
 import { EmployeeDetailPage } from "./pages/EmployeeDetailPage";
 import { SecurityPage } from "./pages/SecurityPage";
 import { VisitorsPage } from "./pages/VisitorsPage";
+import { AccessControlPage } from "./pages/AccessControlPage";
+import { ParkingPage } from "./pages/ParkingPage";
+import { CargoPage } from "./pages/CargoPage";
+import { FacilityReservationsPage } from "./pages/FacilityReservationsPage";
+import { AnnouncementsPage } from "./pages/AnnouncementsPage";
+import { SurveysPage } from "./pages/SurveysPage";
 
 function App() {
   return (
@@ -43,6 +49,12 @@ function App() {
               <Route path="employees/:employeeId" element={<EmployeeDetailPage />} />
               <Route path="security" element={<SecurityPage />} />
               <Route path="visitors" element={<VisitorsPage />} />
+              <Route path="access-control" element={<AccessControlPage />} />
+              <Route path="parking" element={<ParkingPage />} />
+              <Route path="cargo" element={<CargoPage />} />
+              <Route path="facility-reservations" element={<FacilityReservationsPage />} />
+              <Route path="announcements" element={<AnnouncementsPage />} />
+              <Route path="surveys" element={<SurveysPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
             <Route path="/persons" element={<PersonsPage />} />

@@ -8,8 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"siteyonetimi/backend/internal/access"
 	"siteyonetimi/backend/internal/accounting"
+	"siteyonetimi/backend/internal/announcement"
 	"siteyonetimi/backend/internal/auth"
+	"siteyonetimi/backend/internal/cargo"
 	"siteyonetimi/backend/internal/config"
 	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/finance"
@@ -18,10 +21,13 @@ import (
 	"siteyonetimi/backend/internal/maintenance"
 	"siteyonetimi/backend/internal/meter"
 	"siteyonetimi/backend/internal/middleware"
+	"siteyonetimi/backend/internal/parking"
 	"siteyonetimi/backend/internal/procurement"
 	"siteyonetimi/backend/internal/request"
+	"siteyonetimi/backend/internal/reservation"
 	"siteyonetimi/backend/internal/security"
 	"siteyonetimi/backend/internal/site"
+	"siteyonetimi/backend/internal/survey"
 	"siteyonetimi/backend/internal/visitor"
 )
 
@@ -79,6 +85,24 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	visitorService := visitor.NewService(pool)
 	visitorHandler := visitor.NewHandler(visitorService)
 
+	accessService := access.NewService(pool)
+	accessHandler := access.NewHandler(accessService)
+
+	parkingService := parking.NewService(pool)
+	parkingHandler := parking.NewHandler(parkingService)
+
+	cargoService := cargo.NewService(pool)
+	cargoHandler := cargo.NewHandler(cargoService)
+
+	reservationService := reservation.NewService(pool)
+	reservationHandler := reservation.NewHandler(reservationService)
+
+	announcementService := announcement.NewService(pool)
+	announcementHandler := announcement.NewHandler(announcementService)
+
+	surveyService := survey.NewService(pool)
+	surveyHandler := survey.NewHandler(surveyService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
@@ -96,6 +120,12 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	hrHandler.RegisterRoutes(protected)
 	securityHandler.RegisterRoutes(protected)
 	visitorHandler.RegisterRoutes(protected)
+	accessHandler.RegisterRoutes(protected)
+	parkingHandler.RegisterRoutes(protected)
+	cargoHandler.RegisterRoutes(protected)
+	reservationHandler.RegisterRoutes(protected)
+	announcementHandler.RegisterRoutes(protected)
+	surveyHandler.RegisterRoutes(protected)
 
 	return router
 }

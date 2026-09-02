@@ -28,6 +28,12 @@ const NAV_ITEMS = [
   { label: "Personel", path: "employees" },
   { label: "Güvenlik", path: "security" },
   { label: "Ziyaretçi", path: "visitors" },
+  { label: "Geçiş Kontrol", path: "access-control" },
+  { label: "Otopark", path: "parking" },
+  { label: "Kargo", path: "cargo" },
+  { label: "Tesis Rezervasyon", path: "facility-reservations" },
+  { label: "Duyurular", path: "announcements" },
+  { label: "Anket", path: "surveys" },
 ];
 
 export function SiteLayout() {
