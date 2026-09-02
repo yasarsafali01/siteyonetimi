@@ -9,10 +9,12 @@ import (
 )
 
 type AccessClaims struct {
-	UserID       uuid.UUID `json:"uid"`
-	TenantID     uuid.UUID `json:"tid"`
-	IsSuperAdmin bool      `json:"sa"`
-	Permissions  []string  `json:"perms"`
+	UserID       uuid.UUID  `json:"uid"`
+	TenantID     uuid.UUID  `json:"tid"`
+	IsSuperAdmin bool       `json:"sa"`
+	Permissions  []string   `json:"perms"`
+	UserType     string     `json:"utype"`
+	PersonID     *uuid.UUID `json:"pid,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -21,12 +23,14 @@ type RefreshClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(secret string, ttl time.Duration, userID, tenantID uuid.UUID, isSuperAdmin bool, permissions []string) (string, error) {
+func GenerateAccessToken(secret string, ttl time.Duration, userID, tenantID uuid.UUID, isSuperAdmin bool, permissions []string, userType string, personID *uuid.UUID) (string, error) {
 	claims := AccessClaims{
 		UserID:       userID,
 		TenantID:     tenantID,
 		IsSuperAdmin: isSuperAdmin,
 		Permissions:  permissions,
+		UserType:     userType,
+		PersonID:     personID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

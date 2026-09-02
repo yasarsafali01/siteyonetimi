@@ -59,7 +59,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	crmHandler := crm.NewHandler(crmService)
 
 	financeService := finance.NewService(pool)
-	financeHandler := finance.NewHandler(financeService)
+	financeHandler := finance.NewHandler(financeService, crmService)
 
 	accountingService := accounting.NewService(pool)
 	accountingHandler := accounting.NewHandler(accountingService)
@@ -68,7 +68,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	meterHandler := meter.NewHandler(meterService, financeService)
 
 	requestService := request.NewService(pool)
-	requestHandler := request.NewHandler(requestService)
+	requestHandler := request.NewHandler(requestService, crmService)
 
 	maintenanceService := maintenance.NewService(pool)
 	maintenanceHandler := maintenance.NewHandler(maintenanceService)
@@ -86,7 +86,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	securityHandler := security.NewHandler(securityService)
 
 	visitorService := visitor.NewService(pool)
-	visitorHandler := visitor.NewHandler(visitorService)
+	visitorHandler := visitor.NewHandler(visitorService, crmService)
 
 	accessService := access.NewService(pool)
 	accessHandler := access.NewHandler(accessService)
@@ -98,7 +98,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	cargoHandler := cargo.NewHandler(cargoService)
 
 	reservationService := reservation.NewService(pool)
-	reservationHandler := reservation.NewHandler(reservationService)
+	reservationHandler := reservation.NewHandler(reservationService, crmService)
 
 	announcementService := announcement.NewService(pool)
 	announcementHandler := announcement.NewHandler(announcementService)
@@ -120,6 +120,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(cfg.JWTAccessSecret))
+	authHandler.RegisterProtectedRoutes(protected.Group("/auth"))
 	siteHandler.RegisterRoutes(protected)
 	crmHandler.RegisterRoutes(protected)
 	financeHandler.RegisterRoutes(protected)

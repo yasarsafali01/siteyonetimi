@@ -1,6 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Alert, AppBar, Box, Button, Chip, Toolbar, Typography } from "@mui/material";
+import {
+  Alert,
+  AppBar,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import {
   createContactHistory,
   createPersonNote,
@@ -15,6 +28,7 @@ import {
   vehicles,
 } from "../api/crm";
 import { getPersonBalance } from "../api/finance";
+import { createUser, listUsers } from "../api/users";
 import type { UnitBalance } from "../types/finance";
 import type {
   ContactHistoryEntry,
@@ -27,6 +41,7 @@ import type {
   Vehicle,
   PersonNote,
 } from "../types/crm";
+import type { AppUser } from "../types/user";
 import { InlineListManager } from "../components/InlineListManager";
 
 export function PersonDetailPage() {
@@ -45,10 +60,16 @@ export function PersonDetailPage() {
   const [balance, setBalance] = useState<UnitBalance | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [loginUser, setLoginUser] = useState<AppUser | null>(null);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   async function refreshAll() {
     if (!personId) return;
     try {
-      const [p, res, fam, emg, veh, pt, poa, hist, nts, bal] = await Promise.all([
+      const [p, res, fam, emg, veh, pt, poa, hist, nts, bal, users] = await Promise.all([
         getPerson(personId),
         listResidencies(personId),
         familyMembers.list(personId),
@@ -59,6 +80,7 @@ export function PersonDetailPage() {
         listContactHistory(personId),
         listPersonNotes(personId),
         getPersonBalance(personId),
+        listUsers(),
       ]);
       setPerson(p);
       setResidencies(res);
@@ -70,9 +92,27 @@ export function PersonDetailPage() {
       setHistory(hist);
       setNotes(nts);
       setBalance(bal);
+      setLoginUser(users.find((u) => u.personId === personId) ?? null);
       setError(null);
     } catch {
       setError("Kişi bilgileri yüklenemedi");
+    }
+  }
+
+  async function handleCreateLogin(e: FormEvent) {
+    e.preventDefault();
+    if (!personId) return;
+    setSubmitting(true);
+    try {
+      await createUser({ email: loginEmail, password: loginPassword, fullName: person ? `${person.firstName} ${person.lastName}` : loginEmail, userType: "sakin", personId });
+      setLoginDialogOpen(false);
+      setLoginEmail("");
+      setLoginPassword("");
+      await refreshAll();
+    } catch {
+      setError("Giriş hesabı oluşturulamadı — e-posta zaten kullanılıyor olabilir");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -103,10 +143,17 @@ export function PersonDetailPage() {
             </Typography>
             {balance && (
               <Chip
-                sx={{ mt: 1 }}
+                sx={{ mt: 1, mr: 1 }}
                 label={`Kalan Bakiye: ${balance.remainingAmount.toLocaleString("tr-TR")} ₺`}
                 color={balance.remainingAmount > 0 ? "warning" : "success"}
               />
+            )}
+            {loginUser ? (
+              <Chip sx={{ mt: 1 }} label={`Giriş Hesabı: ${loginUser.email}`} color="info" variant="outlined" />
+            ) : (
+              <Button size="small" sx={{ mt: 1 }} onClick={() => setLoginDialogOpen(true)}>
+                Sakin Giriş Hesabı Oluştur
+              </Button>
             )}
           </Box>
         )}
@@ -261,6 +308,24 @@ export function PersonDetailPage() {
           }}
         />
       </Box>
+
+      <Dialog open={loginDialogOpen} onClose={() => setLoginDialogOpen(false)} fullWidth maxWidth="xs">
+        <Box component="form" onSubmit={handleCreateLogin}>
+          <DialogTitle>Sakin Giriş Hesabı Oluştur</DialogTitle>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Bu kişi, oluşturulan e-posta/şifre ile kendi bağımsız bölümüne ait borç/talep/rezervasyon/ziyaretçi
+              verilerini görüntüleyip işlem yapabilir.
+            </Typography>
+            <TextField label="E-posta" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoFocus fullWidth />
+            <TextField label="Şifre" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required fullWidth helperText="En az 8 karakter" />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setLoginDialogOpen(false)}>Vazgeç</Button>
+            <Button type="submit" variant="contained" disabled={submitting}>Oluştur</Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </Box>
   );
 }

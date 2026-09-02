@@ -3,19 +3,22 @@ package reservation
 import (
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/middleware"
 )
 
 type Handler struct {
-	service *Service
+	service    *Service
+	crmService *crm.Service
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, crmService *crm.Service) *Handler {
+	return &Handler{service: service, crmService: crmService}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -63,6 +66,42 @@ func handleServiceError(c *gin.Context, err error) {
 	}
 }
 
+func userType(c *gin.Context) string {
+	v, _ := c.Get(middleware.ContextKeyUserType)
+	s, _ := v.(string)
+	return s
+}
+
+func callerPersonID(c *gin.Context) *uuid.UUID {
+	v, ok := c.Get(middleware.ContextKeyPersonID)
+	if !ok {
+		return nil
+	}
+	id, ok := v.(uuid.UUID)
+	if !ok {
+		return nil
+	}
+	return &id
+}
+
+func (h *Handler) callerUnitIDs(c *gin.Context) []uuid.UUID {
+	pid := callerPersonID(c)
+	if pid == nil {
+		return nil
+	}
+	residencies, err := h.crmService.ListResidencesForPerson(c.Request.Context(), tenantID(c), *pid)
+	if err != nil {
+		return nil
+	}
+	ids := make([]uuid.UUID, 0, len(residencies))
+	for _, r := range residencies {
+		if r.IsActive {
+			ids = append(ids, r.UnitID)
+		}
+	}
+	return ids
+}
+
 type reservationRequest struct {
 	CommonAreaID uuid.UUID  `json:"commonAreaId" binding:"required"`
 	UnitID       *uuid.UUID `json:"unitId"`
@@ -82,6 +121,27 @@ func (h *Handler) createReservation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if userType(c) == "sakin" {
+		pid := callerPersonID(c)
+		if pid == nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+			return
+		}
+		ownUnits := h.callerUnitIDs(c)
+		if req.UnitID == nil {
+			if len(ownUnits) != 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "unitId belirtilmeli"})
+				return
+			}
+			req.UnitID = &ownUnits[0]
+		} else if !slices.Contains(ownUnits, *req.UnitID) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "sadece kendi biriminiz için rezervasyon oluşturabilirsiniz"})
+			return
+		}
+		req.PersonID = pid
+	}
+
 	result, err := h.service.CreateReservation(c.Request.Context(), tenantID(c), siteID, req.CommonAreaID, req.UnitID, req.PersonID, userID(c), req.StartTime, req.EndTime, req.Note)
 	if err != nil {
 		handleServiceError(c, err)
@@ -108,6 +168,10 @@ type decideReservationRequest struct {
 }
 
 func (h *Handler) decideReservation(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	reservationID, ok := paramUUID(c, "reservationId")
 	if !ok {
 		return
@@ -126,6 +190,10 @@ func (h *Handler) decideReservation(c *gin.Context) {
 }
 
 func (h *Handler) cancelReservation(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok — iptal talebi için yönetimle iletişime geçin"})
+		return
+	}
 	reservationID, ok := paramUUID(c, "reservationId")
 	if !ok {
 		return

@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 
@@ -51,8 +52,8 @@ func (s *Service) RegisterTenant(ctx context.Context, companyName, email, passwo
 	}
 
 	if _, err := tx.Exec(ctx,
-		`INSERT INTO users (tenant_id, email, password_hash, full_name, is_super_admin)
-		 VALUES ($1, $2, $3, $4, TRUE)`,
+		`INSERT INTO users (tenant_id, email, password_hash, full_name, is_super_admin, user_type)
+		 VALUES ($1, $2, $3, $4, TRUE, 'yonetici')`,
 		tenantID, email, string(passwordHash), fullName,
 	); err != nil {
 		return uuid.Nil, err
@@ -67,9 +68,9 @@ func (s *Service) RegisterTenant(ctx context.Context, companyName, email, passwo
 func (s *Service) Login(ctx context.Context, email, password string) (TokenPair, error) {
 	var u User
 	err := s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, email, password_hash, full_name, is_super_admin, is_active
+		`SELECT id, tenant_id, email, password_hash, full_name, is_super_admin, is_active, user_type, person_id
 		 FROM users WHERE email = $1`, email,
-	).Scan(&u.ID, &u.TenantID, &u.Email, &u.PasswordHash, &u.FullName, &u.IsSuperAdmin, &u.IsActive)
+	).Scan(&u.ID, &u.TenantID, &u.Email, &u.PasswordHash, &u.FullName, &u.IsSuperAdmin, &u.IsActive, &u.UserType, &u.PersonID)
 	if err != nil {
 		return TokenPair{}, ErrInvalidCredentials
 	}
@@ -107,9 +108,9 @@ func (s *Service) RefreshAccessToken(ctx context.Context, refreshToken string) (
 
 	var u User
 	err = s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, email, password_hash, full_name, is_super_admin, is_active
+		`SELECT id, tenant_id, email, password_hash, full_name, is_super_admin, is_active, user_type, person_id
 		 FROM users WHERE id = $1`, storedUserID,
-	).Scan(&u.ID, &u.TenantID, &u.Email, &u.PasswordHash, &u.FullName, &u.IsSuperAdmin, &u.IsActive)
+	).Scan(&u.ID, &u.TenantID, &u.Email, &u.PasswordHash, &u.FullName, &u.IsSuperAdmin, &u.IsActive, &u.UserType, &u.PersonID)
 	if err != nil || !u.IsActive {
 		return TokenPair{}, ErrInvalidRefreshToken
 	}
@@ -130,7 +131,7 @@ func (s *Service) RefreshAccessToken(ctx context.Context, refreshToken string) (
 }
 
 func (s *Service) issueTokenPair(ctx context.Context, u User, permissions []string) (TokenPair, error) {
-	accessToken, err := GenerateAccessToken(s.cfg.JWTAccessSecret, s.cfg.AccessTokenTTL, u.ID, u.TenantID, u.IsSuperAdmin, permissions)
+	accessToken, err := GenerateAccessToken(s.cfg.JWTAccessSecret, s.cfg.AccessTokenTTL, u.ID, u.TenantID, u.IsSuperAdmin, permissions, u.UserType, u.PersonID)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -172,6 +173,83 @@ func (s *Service) fetchPermissions(ctx context.Context, userID uuid.UUID) ([]str
 		permissions = append(permissions, code)
 	}
 	return permissions, rows.Err()
+}
+
+var ErrPersonNotFound = errors.New("kişi bulunamadı")
+var ErrPersonHasLogin = errors.New("bu kişinin zaten bir giriş hesabı var")
+var ErrEmailTaken = errors.New("bu e-posta zaten kullanılıyor")
+
+// CreateUser, tenant içinde ek bir giriş hesabı oluşturur. userType "sakin" ise
+// personID zorunludur ve o kişi adına daha önce hesap açılmamış olmalıdır — bu,
+// bir kat malikinin/kiracının kendi hesabıyla giriş yapabilmesini sağlar.
+func (s *Service) CreateUser(ctx context.Context, tenantID uuid.UUID, email, password, fullName, userType string, personID *uuid.UUID) (User, error) {
+	if userType == "sakin" {
+		if personID == nil {
+			return User{}, ErrPersonNotFound
+		}
+		var exists bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM persons WHERE id = $1 AND tenant_id = $2)`, personID, tenantID).Scan(&exists); err != nil {
+			return User{}, err
+		}
+		if !exists {
+			return User{}, ErrPersonNotFound
+		}
+		var hasLogin bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE person_id = $1)`, personID).Scan(&hasLogin); err != nil {
+			return User{}, err
+		}
+		if hasLogin {
+			return User{}, ErrPersonHasLogin
+		}
+	} else {
+		personID = nil
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return User{}, err
+	}
+
+	var u User
+	err = s.pool.QueryRow(ctx,
+		`INSERT INTO users (tenant_id, email, password_hash, full_name, is_super_admin, user_type, person_id)
+		 VALUES ($1, $2, $3, $4, FALSE, $5, $6)
+		 RETURNING id, tenant_id, email, full_name, is_super_admin, is_active, user_type, person_id`,
+		tenantID, email, string(passwordHash), fullName, userType, personID,
+	).Scan(&u.ID, &u.TenantID, &u.Email, &u.FullName, &u.IsSuperAdmin, &u.IsActive, &u.UserType, &u.PersonID)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return User{}, ErrEmailTaken
+		}
+		return User{}, err
+	}
+	return u, nil
+}
+
+func (s *Service) ListUsers(ctx context.Context, tenantID uuid.UUID) ([]User, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, tenant_id, email, full_name, is_super_admin, is_active, user_type, person_id
+		 FROM users WHERE tenant_id = $1 ORDER BY created_at`, tenantID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := []User{}
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.TenantID, &u.Email, &u.FullName, &u.IsSuperAdmin, &u.IsActive, &u.UserType, &u.PersonID); err != nil {
+			return nil, err
+		}
+		list = append(list, u)
+	}
+	return list, rows.Err()
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
 func hashToken(token string) string {

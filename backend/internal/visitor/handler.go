@@ -3,19 +3,22 @@ package visitor
 import (
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/middleware"
 )
 
 type Handler struct {
-	service *Service
+	service    *Service
+	crmService *crm.Service
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, crmService *crm.Service) *Handler {
+	return &Handler{service: service, crmService: crmService}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -67,6 +70,42 @@ func handleServiceError(c *gin.Context, err error) {
 	}
 }
 
+func userType(c *gin.Context) string {
+	v, _ := c.Get(middleware.ContextKeyUserType)
+	s, _ := v.(string)
+	return s
+}
+
+func callerPersonID(c *gin.Context) *uuid.UUID {
+	v, ok := c.Get(middleware.ContextKeyPersonID)
+	if !ok {
+		return nil
+	}
+	id, ok := v.(uuid.UUID)
+	if !ok {
+		return nil
+	}
+	return &id
+}
+
+func (h *Handler) callerUnitIDs(c *gin.Context) []uuid.UUID {
+	pid := callerPersonID(c)
+	if pid == nil {
+		return nil
+	}
+	residencies, err := h.crmService.ListResidencesForPerson(c.Request.Context(), tenantID(c), *pid)
+	if err != nil {
+		return nil
+	}
+	ids := make([]uuid.UUID, 0, len(residencies))
+	for _, r := range residencies {
+		if r.IsActive {
+			ids = append(ids, r.UnitID)
+		}
+	}
+	return ids
+}
+
 // --- Invitations ---
 
 type invitationRequest struct {
@@ -88,6 +127,27 @@ func (h *Handler) createInvitation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if userType(c) == "sakin" {
+		pid := callerPersonID(c)
+		if pid == nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+			return
+		}
+		ownUnits := h.callerUnitIDs(c)
+		if req.UnitID == nil {
+			if len(ownUnits) != 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "unitId belirtilmeli"})
+				return
+			}
+			req.UnitID = &ownUnits[0]
+		} else if !slices.Contains(ownUnits, *req.UnitID) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "sadece kendi biriminiz için davetiye oluşturabilirsiniz"})
+			return
+		}
+		req.HostPersonID = pid
+	}
+
 	result, err := h.service.CreateInvitation(c.Request.Context(), tenantID(c), siteID, req.UnitID, req.HostPersonID, req.VisitorName, req.VisitorPhone, req.VehiclePlate, req.ValidUntil, userID(c))
 	if err != nil {
 		handleServiceError(c, err)
@@ -106,6 +166,16 @@ func (h *Handler) listInvitations(c *gin.Context) {
 		handleServiceError(c, err)
 		return
 	}
+	if userType(c) == "sakin" {
+		ownUnits := h.callerUnitIDs(c)
+		filtered := make([]Invitation, 0, len(result))
+		for _, inv := range result {
+			if inv.UnitID != nil && slices.Contains(ownUnits, *inv.UnitID) {
+				filtered = append(filtered, inv)
+			}
+		}
+		result = filtered
+	}
 	c.JSON(http.StatusOK, result)
 }
 
@@ -114,6 +184,10 @@ type decideInvitationRequest struct {
 }
 
 func (h *Handler) decideInvitation(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	invitationID, ok := paramUUID(c, "invitationId")
 	if !ok {
 		return
@@ -134,6 +208,10 @@ func (h *Handler) decideInvitation(c *gin.Context) {
 // --- Logs ---
 
 func (h *Handler) listLogs(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	siteID, ok := paramUUID(c, "siteId")
 	if !ok {
 		return
@@ -157,6 +235,10 @@ type walkInRequest struct {
 }
 
 func (h *Handler) checkInWalkIn(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	siteID, ok := paramUUID(c, "siteId")
 	if !ok {
 		return
@@ -180,6 +262,10 @@ type checkInCodeRequest struct {
 }
 
 func (h *Handler) checkInWithCode(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	siteID, ok := paramUUID(c, "siteId")
 	if !ok {
 		return
@@ -198,6 +284,10 @@ func (h *Handler) checkInWithCode(c *gin.Context) {
 }
 
 func (h *Handler) checkOut(c *gin.Context) {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return
+	}
 	logID, ok := paramUUID(c, "logId")
 	if !ok {
 		return

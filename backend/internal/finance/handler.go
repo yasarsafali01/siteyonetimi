@@ -3,20 +3,23 @@ package finance
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"siteyonetimi/backend/internal/crm"
 	"siteyonetimi/backend/internal/middleware"
 )
 
 type Handler struct {
-	service *Service
+	service    *Service
+	crmService *crm.Service
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, crmService *crm.Service) *Handler {
+	return &Handler{service: service, crmService: crmService}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -64,6 +67,53 @@ func paramUUID(c *gin.Context, name string) (uuid.UUID, bool) {
 	return id, true
 }
 
+func userType(c *gin.Context) string {
+	v, _ := c.Get(middleware.ContextKeyUserType)
+	s, _ := v.(string)
+	return s
+}
+
+func callerPersonID(c *gin.Context) *uuid.UUID {
+	v, ok := c.Get(middleware.ContextKeyPersonID)
+	if !ok {
+		return nil
+	}
+	id, ok := v.(uuid.UUID)
+	if !ok {
+		return nil
+	}
+	return &id
+}
+
+// callerUnitIDs, sakin tipi kullanıcının malik/kiracı olduğu birimlerin id listesini döner.
+func (h *Handler) callerUnitIDs(c *gin.Context) []uuid.UUID {
+	pid := callerPersonID(c)
+	if pid == nil {
+		return nil
+	}
+	residencies, err := h.crmService.ListResidencesForPerson(c.Request.Context(), tenantID(c), *pid)
+	if err != nil {
+		return nil
+	}
+	ids := make([]uuid.UUID, 0, len(residencies))
+	for _, r := range residencies {
+		if r.IsActive {
+			ids = append(ids, r.UnitID)
+		}
+	}
+	return ids
+}
+
+// forbidSakin, mali işlem (borç oluşturma/silme, tahsilat, toplu üretim) endpoint'lerini
+// sadece yönetici için açık tutar.
+func forbidSakin(c *gin.Context) bool {
+	if userType(c) == "sakin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "bu işlem için yetkiniz yok"})
+		return true
+	}
+	return false
+}
+
 func handleServiceError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, ErrNotFound):
@@ -86,6 +136,9 @@ type chargeRequest struct {
 }
 
 func (h *Handler) createCharge(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	unitID, ok := paramUUID(c, "unitId")
 	if !ok {
 		return
@@ -117,6 +170,10 @@ func (h *Handler) listChargesForUnit(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if userType(c) == "sakin" && !slices.Contains(h.callerUnitIDs(c), unitID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "sadece kendi biriminizin borçlarını görüntüleyebilirsiniz"})
+		return
+	}
 	result, err := h.service.ListChargesForUnit(c.Request.Context(), tenantID(c), unitID)
 	if err != nil {
 		handleServiceError(c, err)
@@ -128,6 +185,10 @@ func (h *Handler) listChargesForUnit(c *gin.Context) {
 func (h *Handler) getUnitBalance(c *gin.Context) {
 	unitID, ok := paramUUID(c, "unitId")
 	if !ok {
+		return
+	}
+	if userType(c) == "sakin" && !slices.Contains(h.callerUnitIDs(c), unitID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "sadece kendi biriminizin bakiyesini görüntüleyebilirsiniz"})
 		return
 	}
 	result, err := h.service.GetUnitBalance(c.Request.Context(), tenantID(c), unitID)
@@ -143,6 +204,13 @@ func (h *Handler) getPersonBalance(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if userType(c) == "sakin" {
+		pid := callerPersonID(c)
+		if pid == nil || *pid != personID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "sadece kendi bakiyenizi görüntüleyebilirsiniz"})
+			return
+		}
+	}
 	result, err := h.service.GetPersonBalance(c.Request.Context(), tenantID(c), personID)
 	if err != nil {
 		handleServiceError(c, err)
@@ -152,6 +220,9 @@ func (h *Handler) getPersonBalance(c *gin.Context) {
 }
 
 func (h *Handler) deleteCharge(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	chargeID, ok := paramUUID(c, "chargeId")
 	if !ok {
 		return
@@ -164,6 +235,9 @@ func (h *Handler) deleteCharge(c *gin.Context) {
 }
 
 func (h *Handler) listChargesForSite(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	siteID, ok := paramUUID(c, "siteId")
 	if !ok {
 		return
@@ -185,6 +259,9 @@ type bulkGenerateRequest struct {
 }
 
 func (h *Handler) bulkGenerateDues(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	siteID, ok := paramUUID(c, "siteId")
 	if !ok {
 		return
@@ -212,6 +289,9 @@ type paymentRequest struct {
 }
 
 func (h *Handler) createPayment(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	chargeID, ok := paramUUID(c, "chargeId")
 	if !ok {
 		return
@@ -234,6 +314,9 @@ func (h *Handler) createPayment(c *gin.Context) {
 }
 
 func (h *Handler) listPaymentsForCharge(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	chargeID, ok := paramUUID(c, "chargeId")
 	if !ok {
 		return
@@ -251,6 +334,9 @@ type reassignRequest struct {
 }
 
 func (h *Handler) reassignPayment(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	paymentID, ok := paramUUID(c, "paymentId")
 	if !ok {
 		return
@@ -269,6 +355,9 @@ func (h *Handler) reassignPayment(c *gin.Context) {
 }
 
 func (h *Handler) deletePayment(c *gin.Context) {
+	if forbidSakin(c) {
+		return
+	}
 	paymentID, ok := paramUUID(c, "paymentId")
 	if !ok {
 		return

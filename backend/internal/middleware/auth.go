@@ -14,6 +14,8 @@ const (
 	ContextKeyTenantID     = "tenantID"
 	ContextKeyIsSuperAdmin = "isSuperAdmin"
 	ContextKeyPermissions  = "permissions"
+	ContextKeyUserType     = "userType"
+	ContextKeyPersonID     = "personID"
 )
 
 // RequireAuth Authorization: Bearer <token> başlığını doğrular ve claim'leri context'e yazar.
@@ -36,6 +38,10 @@ func RequireAuth(accessSecret string) gin.HandlerFunc {
 		c.Set(ContextKeyTenantID, claims.TenantID)
 		c.Set(ContextKeyIsSuperAdmin, claims.IsSuperAdmin)
 		c.Set(ContextKeyPermissions, claims.Permissions)
+		c.Set(ContextKeyUserType, claims.UserType)
+		if claims.PersonID != nil {
+			c.Set(ContextKeyPersonID, *claims.PersonID)
+		}
 		c.Next()
 	}
 }

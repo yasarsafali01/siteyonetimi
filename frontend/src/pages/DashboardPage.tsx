@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 const MODULES = [
   { title: "Siteler", description: "Site, blok ve bağımsız bölüm yönetimi", path: "/sites" },
   { title: "Kişiler (CRM)", description: "Malik, kiracı ve diğer kişi kayıtları", path: "/persons" },
+  { title: "Kullanıcılar", description: "Yönetici ve sakin giriş hesapları", path: "/users" },
 ];
 
 export function DashboardPage() {
