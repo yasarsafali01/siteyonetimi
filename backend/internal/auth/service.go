@@ -175,6 +175,59 @@ func (s *Service) fetchPermissions(ctx context.Context, userID uuid.UUID) ([]str
 	return permissions, rows.Err()
 }
 
+// GetMe, oturum açmış kullanıcının kimliğini; sakin ise bağlı olduğu kişi adını
+// ve malik/kiracı olduğu bağımsız bölümleri (site/blok bağlamıyla) tek sorguda döner.
+func (s *Service) GetMe(ctx context.Context, tenantID, userID uuid.UUID) (Me, error) {
+	var me Me
+	var personID *uuid.UUID
+	err := s.pool.QueryRow(ctx,
+		`SELECT id, email, full_name, user_type, is_super_admin, person_id
+		 FROM users WHERE id = $1 AND tenant_id = $2`,
+		userID, tenantID,
+	).Scan(&me.ID, &me.Email, &me.FullName, &me.UserType, &me.IsSuperAdmin, &personID)
+	if err != nil {
+		return Me{}, err
+	}
+	me.PersonID = personID
+	if personID == nil {
+		return me, nil
+	}
+
+	var personName string
+	if err := s.pool.QueryRow(ctx,
+		`SELECT first_name || ' ' || last_name FROM persons WHERE id = $1 AND tenant_id = $2`,
+		personID, tenantID,
+	).Scan(&personName); err != nil {
+		return Me{}, err
+	}
+	me.PersonName = &personName
+
+	rows, err := s.pool.Query(ctx,
+		`SELECT u.id, u.unit_number, b.id, b.name, s.id, s.name, ur.relation
+		 FROM unit_residents ur
+		 JOIN units u ON u.id = ur.unit_id
+		 JOIN blocks b ON b.id = u.block_id
+		 JOIN sites s ON s.id = u.site_id
+		 WHERE ur.tenant_id = $1 AND ur.person_id = $2 AND ur.is_active = TRUE
+		 ORDER BY s.name, b.name, u.unit_number`,
+		tenantID, personID,
+	)
+	if err != nil {
+		return Me{}, err
+	}
+	defer rows.Close()
+
+	me.Residencies = []Residency{}
+	for rows.Next() {
+		var r Residency
+		if err := rows.Scan(&r.UnitID, &r.UnitNumber, &r.BlockID, &r.BlockName, &r.SiteID, &r.SiteName, &r.Relation); err != nil {
+			return Me{}, err
+		}
+		me.Residencies = append(me.Residencies, r)
+	}
+	return me, rows.Err()
+}
+
 var ErrPersonNotFound = errors.New("kişi bulunamadı")
 var ErrPersonHasLogin = errors.New("bu kişinin zaten bir giriş hesabı var")
 var ErrEmailTaken = errors.New("bu e-posta zaten kullanılıyor")

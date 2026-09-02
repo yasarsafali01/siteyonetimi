@@ -11,6 +11,7 @@ import (
 // middleware.RequireAuth ile aynı context anahtarları — burada tekrarlanır çünkü
 // middleware paketi zaten auth paketini import ediyor (import cycle önlenir).
 const (
+	contextKeyUserID       = "userID"
 	contextKeyTenantID     = "tenantID"
 	contextKeyIsSuperAdmin = "isSuperAdmin"
 	contextKeyUserType     = "userType"
@@ -33,6 +34,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // RegisterProtectedRoutes, giriş yapmış kullanıcı gerektiren kullanıcı yönetimi
 // rotalarını kaydeder (ek yönetici/sakin hesabı oluşturma, hesap listesi).
 func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
+	rg.GET("/me", h.me)
 	rg.GET("/users", h.listUsers)
 	rg.POST("/users", h.createUser)
 }
@@ -41,6 +43,21 @@ func tenantID(c *gin.Context) uuid.UUID {
 	v, _ := c.Get(contextKeyTenantID)
 	id, _ := v.(uuid.UUID)
 	return id
+}
+
+func userID(c *gin.Context) uuid.UUID {
+	v, _ := c.Get(contextKeyUserID)
+	id, _ := v.(uuid.UUID)
+	return id
+}
+
+func (h *Handler) me(c *gin.Context) {
+	result, err := h.service.GetMe(c.Request.Context(), tenantID(c), userID(c))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "işlem başarısız"})
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func userType(c *gin.Context) string {

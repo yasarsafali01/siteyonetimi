@@ -30,6 +30,7 @@ import { DocumentsPage } from "./pages/DocumentsPage";
 import { LegalPage } from "./pages/LegalPage";
 import { ReportingPage } from "./pages/ReportingPage";
 import { UsersPage } from "./pages/UsersPage";
+import { ResidentDashboardPage } from "./pages/ResidentDashboardPage";
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
             <Route path="/persons" element={<PersonsPage />} />
             <Route path="/persons/:personId" element={<PersonDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/resident" element={<ResidentDashboardPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

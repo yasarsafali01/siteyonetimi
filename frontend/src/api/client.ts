@@ -36,6 +36,17 @@ export function getCurrentUserId(): string | null {
   }
 }
 
+export function getCurrentUserType(): "yonetici" | "sakin" | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.utype ?? null;
+  } catch {
+    return null;
+  }
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {

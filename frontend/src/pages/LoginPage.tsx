@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { useAuth } from "../auth/AuthContext";
+import { getCurrentUserType } from "../api/client";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -17,7 +18,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate(getCurrentUserType() === "sakin" ? "/resident" : "/dashboard");
     } catch {
       setError("E-posta veya şifre hatalı");
     } finally {
