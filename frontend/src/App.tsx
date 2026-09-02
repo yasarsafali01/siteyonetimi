@@ -30,8 +30,13 @@ import { DocumentsPage } from "./pages/DocumentsPage";
 import { LegalPage } from "./pages/LegalPage";
 import { ReportingPage } from "./pages/ReportingPage";
 import { UsersPage } from "./pages/UsersPage";
-import { ResidentDashboardPage } from "./pages/ResidentDashboardPage";
 import { MainLayout } from "./pages/MainLayout";
+import { ResidentLayout } from "./pages/resident/ResidentLayout";
+import { ResidentOverviewPage } from "./pages/resident/ResidentOverviewPage";
+import { ResidentDebtsPage } from "./pages/resident/ResidentDebtsPage";
+import { ResidentRequestsPage } from "./pages/resident/ResidentRequestsPage";
+import { ResidentReservationsPage } from "./pages/resident/ResidentReservationsPage";
+import { ResidentInvitationsPage } from "./pages/resident/ResidentInvitationsPage";
 
 function App() {
   return (
@@ -71,7 +76,13 @@ function App() {
               <Route path="reports" element={<ReportingPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
-            <Route path="/resident" element={<ResidentDashboardPage />} />
+            <Route path="/resident" element={<ResidentLayout />}>
+              <Route index element={<ResidentOverviewPage />} />
+              <Route path="debts" element={<ResidentDebtsPage />} />
+              <Route path="requests" element={<ResidentRequestsPage />} />
+              <Route path="reservations" element={<ResidentReservationsPage />} />
+              <Route path="invitations" element={<ResidentInvitationsPage />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

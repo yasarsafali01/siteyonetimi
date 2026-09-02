@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Alert, Box, Button, Chip, Typography } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Alert, Box, Button, Chip, Tab, Tabs, Typography } from "@mui/material";
 import {
   decideLeaveRequest,
   leaveRequests,
@@ -30,6 +31,7 @@ export function EmployeeDetailPage() {
   const [advanceList, setAdvanceList] = useState<SalaryAdvance[]>([]);
   const [reviewList, setReviewList] = useState<PerformanceReview[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState(0);
 
   async function refreshAll() {
     if (!employeeId) return;
@@ -70,121 +72,139 @@ export function EmployeeDetailPage() {
       <Box sx={{ p: 4, maxWidth: 720 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Button size="small" onClick={() => navigate(`/sites/${siteId}/employees`)} sx={{ mb: 2 }}>
-          ← Personel Listesi
+        <Button size="small" startIcon={<ArrowBackIcon fontSize="small" />} onClick={() => navigate(`/sites/${siteId}/employees`)} sx={{ mb: 2 }}>
+          Personel Listesi
         </Button>
 
-        <InlineListManager<Shift>
-          title="Vardiya Planları"
-          items={shiftList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => new Date(i.shiftDate).toLocaleDateString("tr-TR")}
-          getSecondary={(i) => `${i.startTime.slice(0, 5)} - ${i.endTime.slice(0, 5)}`}
-          fields={[
-            { name: "shiftDate", label: "Tarih", type: "date", required: true },
-            { name: "startTime", label: "Başlangıç (SS:DD)", required: true },
-            { name: "endTime", label: "Bitiş (SS:DD)", required: true },
-          ]}
-          onSubmit={async (v) => {
-            await shifts.create(employeeId, v);
-            setShiftList(await shifts.list(employeeId));
-          }}
-        />
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Tab label="Vardiya & Puantaj" />
+          <Tab label="İzin Talepleri" />
+          <Tab label="Avans & Performans" />
+        </Tabs>
 
-        <InlineListManager<Timesheet>
-          title="Puantaj"
-          items={timesheetList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => new Date(i.workDate).toLocaleDateString("tr-TR")}
-          getSecondary={(i) => [i.checkIn?.slice(0, 5), i.checkOut?.slice(0, 5)].filter(Boolean).join(" - ") || undefined}
-          fields={[
-            { name: "workDate", label: "Tarih", type: "date", required: true },
-            { name: "checkIn", label: "Giriş (SS:DD)" },
-            { name: "checkOut", label: "Çıkış (SS:DD)" },
-          ]}
-          onSubmit={async (v) => {
-            await timesheets.create(employeeId, v);
-            setTimesheetList(await timesheets.list(employeeId));
-          }}
-        />
+        {tab === 0 && (
+          <>
+            <InlineListManager<Shift>
+              title="Vardiya Planları"
+              items={shiftList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => new Date(i.shiftDate).toLocaleDateString("tr-TR")}
+              getSecondary={(i) => `${i.startTime.slice(0, 5)} - ${i.endTime.slice(0, 5)}`}
+              fields={[
+                { name: "shiftDate", label: "Tarih", type: "date", required: true },
+                { name: "startTime", label: "Başlangıç (SS:DD)", required: true },
+                { name: "endTime", label: "Bitiş (SS:DD)", required: true },
+              ]}
+              onSubmit={async (v) => {
+                await shifts.create(employeeId, v);
+                setShiftList(await shifts.list(employeeId));
+              }}
+            />
 
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            İzin Talepleri
-          </Typography>
-          {leaveList.length === 0 ? (
-            <Typography color="text.secondary" sx={{ mb: 1 }}>Henüz izin talebi yok.</Typography>
-          ) : (
-            leaveList.map((l) => (
-              <Box key={l.id} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="body2">
-                  {LEAVE_TYPE_LABELS[l.type]} — {new Date(l.startDate).toLocaleDateString("tr-TR")} - {new Date(l.endDate).toLocaleDateString("tr-TR")}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                  <Chip label={LEAVE_STATUS_LABELS[l.status]} size="small" />
-                  {l.status === "bekliyor" && (
-                    <>
-                      <Button size="small" onClick={() => handleLeaveDecision(l.id, true)}>
-                        Onayla
-                      </Button>
-                      <Button size="small" color="error" onClick={() => handleLeaveDecision(l.id, false)}>
-                        Reddet
-                      </Button>
-                    </>
-                  )}
-                </Box>
-              </Box>
-            ))
-          )}
-        </Box>
+            <InlineListManager<Timesheet>
+              title="Puantaj"
+              items={timesheetList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => new Date(i.workDate).toLocaleDateString("tr-TR")}
+              getSecondary={(i) => [i.checkIn?.slice(0, 5), i.checkOut?.slice(0, 5)].filter(Boolean).join(" - ") || undefined}
+              fields={[
+                { name: "workDate", label: "Tarih", type: "date", required: true },
+                { name: "checkIn", label: "Giriş (SS:DD)" },
+                { name: "checkOut", label: "Çıkış (SS:DD)" },
+              ]}
+              onSubmit={async (v) => {
+                await timesheets.create(employeeId, v);
+                setTimesheetList(await timesheets.list(employeeId));
+              }}
+            />
+          </>
+        )}
 
-        <InlineListManager<LeaveRequest>
-          title="Yeni İzin Talebi Oluştur"
-          items={[]}
-          getKey={(i) => i.id}
-          getPrimary={() => ""}
-          fields={[
-            { name: "type", label: "Tür (yillik_izin/ucretsiz_izin/hastalik_izni/mazeret_izni)", required: true },
-            { name: "startDate", label: "Başlangıç", type: "date", required: true },
-            { name: "endDate", label: "Bitiş", type: "date", required: true },
-          ]}
-          onSubmit={async (v) => {
-            await leaveRequests.create(employeeId, v);
-            setLeaveList(await leaveRequests.list(employeeId));
-          }}
-        />
+        {tab === 1 && (
+          <>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                İzin Talepleri
+              </Typography>
+              {leaveList.length === 0 ? (
+                <Typography color="text.secondary" sx={{ mb: 1 }}>Henüz izin talebi yok.</Typography>
+              ) : (
+                leaveList.map((l) => (
+                  <Box key={l.id} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography variant="body2">
+                      {LEAVE_TYPE_LABELS[l.type]} — {new Date(l.startDate).toLocaleDateString("tr-TR")} - {new Date(l.endDate).toLocaleDateString("tr-TR")}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                      <Chip label={LEAVE_STATUS_LABELS[l.status]} size="small" />
+                      {l.status === "bekliyor" && (
+                        <>
+                          <Button size="small" onClick={() => handleLeaveDecision(l.id, true)}>
+                            Onayla
+                          </Button>
+                          <Button size="small" color="error" onClick={() => handleLeaveDecision(l.id, false)}>
+                            Reddet
+                          </Button>
+                        </>
+                      )}
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
 
-        <InlineListManager<SalaryAdvance>
-          title="Avans İşlemleri"
-          items={advanceList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => `${i.amount.toLocaleString("tr-TR")} ₺`}
-          getSecondary={(i) => new Date(i.requestedAt).toLocaleDateString("tr-TR") + (i.note ? ` — ${i.note}` : "")}
-          fields={[
-            { name: "amount", label: "Tutar", type: "number", required: true },
-            { name: "note", label: "Not" },
-          ]}
-          onSubmit={async (v) => {
-            await salaryAdvances.create(employeeId, { ...v, amount: Number(v.amount) });
-            setAdvanceList(await salaryAdvances.list(employeeId));
-          }}
-        />
+            <InlineListManager<LeaveRequest>
+              title="Yeni İzin Talebi Oluştur"
+              items={[]}
+              getKey={(i) => i.id}
+              getPrimary={() => ""}
+              fields={[
+                { name: "type", label: "Tür (yillik_izin/ucretsiz_izin/hastalik_izni/mazeret_izni)", required: true },
+                { name: "startDate", label: "Başlangıç", type: "date", required: true },
+                { name: "endDate", label: "Bitiş", type: "date", required: true },
+              ]}
+              onSubmit={async (v) => {
+                await leaveRequests.create(employeeId, v);
+                setLeaveList(await leaveRequests.list(employeeId));
+              }}
+            />
+          </>
+        )}
 
-        <InlineListManager<PerformanceReview>
-          title="Performans Değerlendirmeleri"
-          items={reviewList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => `Puan: ${i.score}/5`}
-          getSecondary={(i) => [new Date(i.reviewDate).toLocaleDateString("tr-TR"), i.comment].filter(Boolean).join(" — ")}
-          fields={[
-            { name: "score", label: "Puan (1-5)", type: "number", required: true },
-            { name: "comment", label: "Yorum" },
-          ]}
-          onSubmit={async (v) => {
-            await performanceReviews.create(employeeId, { ...v, score: Number(v.score) });
-            setReviewList(await performanceReviews.list(employeeId));
-          }}
-        />
+        {tab === 2 && (
+          <>
+            <InlineListManager<SalaryAdvance>
+              title="Avans İşlemleri"
+              items={advanceList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => `${i.amount.toLocaleString("tr-TR")} ₺`}
+              getSecondary={(i) => new Date(i.requestedAt).toLocaleDateString("tr-TR") + (i.note ? ` — ${i.note}` : "")}
+              fields={[
+                { name: "amount", label: "Tutar", type: "number", required: true },
+                { name: "note", label: "Not" },
+              ]}
+              onSubmit={async (v) => {
+                await salaryAdvances.create(employeeId, { ...v, amount: Number(v.amount) });
+                setAdvanceList(await salaryAdvances.list(employeeId));
+              }}
+            />
+
+            <InlineListManager<PerformanceReview>
+              title="Performans Değerlendirmeleri"
+              items={reviewList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => `Puan: ${i.score}/5`}
+              getSecondary={(i) => [new Date(i.reviewDate).toLocaleDateString("tr-TR"), i.comment].filter(Boolean).join(" — ")}
+              fields={[
+                { name: "score", label: "Puan (1-5)", type: "number", required: true },
+                { name: "comment", label: "Yorum" },
+              ]}
+              onSubmit={async (v) => {
+                await performanceReviews.create(employeeId, { ...v, score: Number(v.score) });
+                setReviewList(await performanceReviews.list(employeeId));
+              }}
+            />
+          </>
+        )}
       </Box>
     </Box>
   );

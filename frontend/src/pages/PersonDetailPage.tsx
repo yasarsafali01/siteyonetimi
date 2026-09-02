@@ -9,6 +9,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
@@ -64,6 +66,7 @@ export function PersonDetailPage() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [tab, setTab] = useState(0);
 
   async function refreshAll() {
     if (!personId) return;
@@ -171,140 +174,161 @@ export function PersonDetailPage() {
           )}
         </Box>
 
-        <InlineListManager<FamilyMember>
-          title="Aile Bireyleri"
-          items={family}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.fullName}
-          getSecondary={(i) => [i.relation, i.phone].filter(Boolean).join(" · ") || undefined}
-          fields={[
-            { name: "fullName", label: "Ad Soyad", required: true },
-            { name: "relation", label: "Yakınlık" },
-            { name: "phone", label: "Telefon" },
-          ]}
-          onSubmit={async (v) => {
-            await familyMembers.create(personId, v);
-            setFamily(await familyMembers.list(personId));
-          }}
-          onDelete={async (i) => {
-            await familyMembers.remove(i.id);
-            setFamily(await familyMembers.list(personId));
-          }}
-        />
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Tab label="Aile & Acil Durum" />
+          <Tab label="Araç & Evcil Hayvan" />
+          <Tab label="Vekalet" />
+          <Tab label="İletişim & Notlar" />
+        </Tabs>
 
-        <InlineListManager<EmergencyContact>
-          title="Acil Durum Kişileri"
-          items={emergency}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.fullName}
-          getSecondary={(i) => [i.phone, i.relation].filter(Boolean).join(" · ") || undefined}
-          fields={[
-            { name: "fullName", label: "Ad Soyad", required: true },
-            { name: "phone", label: "Telefon", required: true },
-            { name: "relation", label: "Yakınlık" },
-          ]}
-          onSubmit={async (v) => {
-            await emergencyContacts.create(personId, v);
-            setEmergency(await emergencyContacts.list(personId));
-          }}
-          onDelete={async (i) => {
-            await emergencyContacts.remove(i.id);
-            setEmergency(await emergencyContacts.list(personId));
-          }}
-        />
+        {tab === 0 && (
+          <>
+            <InlineListManager<FamilyMember>
+              title="Aile Bireyleri"
+              items={family}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.fullName}
+              getSecondary={(i) => [i.relation, i.phone].filter(Boolean).join(" · ") || undefined}
+              fields={[
+                { name: "fullName", label: "Ad Soyad", required: true },
+                { name: "relation", label: "Yakınlık" },
+                { name: "phone", label: "Telefon" },
+              ]}
+              onSubmit={async (v) => {
+                await familyMembers.create(personId, v);
+                setFamily(await familyMembers.list(personId));
+              }}
+              onDelete={async (i) => {
+                await familyMembers.remove(i.id);
+                setFamily(await familyMembers.list(personId));
+              }}
+            />
 
-        <InlineListManager<Vehicle>
-          title="Araçlar"
-          items={vehicleList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.plate}
-          getSecondary={(i) => [i.brand, i.model, i.color].filter(Boolean).join(" · ") || undefined}
-          fields={[
-            { name: "plate", label: "Plaka", required: true },
-            { name: "brand", label: "Marka" },
-            { name: "model", label: "Model" },
-            { name: "color", label: "Renk" },
-          ]}
-          onSubmit={async (v) => {
-            await vehicles.create(personId, v);
-            setVehicleList(await vehicles.list(personId));
-          }}
-          onDelete={async (i) => {
-            await vehicles.remove(i.id);
-            setVehicleList(await vehicles.list(personId));
-          }}
-        />
+            <InlineListManager<EmergencyContact>
+              title="Acil Durum Kişileri"
+              items={emergency}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.fullName}
+              getSecondary={(i) => [i.phone, i.relation].filter(Boolean).join(" · ") || undefined}
+              fields={[
+                { name: "fullName", label: "Ad Soyad", required: true },
+                { name: "phone", label: "Telefon", required: true },
+                { name: "relation", label: "Yakınlık" },
+              ]}
+              onSubmit={async (v) => {
+                await emergencyContacts.create(personId, v);
+                setEmergency(await emergencyContacts.list(personId));
+              }}
+              onDelete={async (i) => {
+                await emergencyContacts.remove(i.id);
+                setEmergency(await emergencyContacts.list(personId));
+              }}
+            />
+          </>
+        )}
 
-        <InlineListManager<Pet>
-          title="Evcil Hayvanlar"
-          items={petList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.name}
-          getSecondary={(i) => [i.species, i.breed].filter(Boolean).join(" · ") || undefined}
-          fields={[
-            { name: "name", label: "Adı", required: true },
-            { name: "species", label: "Tür" },
-            { name: "breed", label: "Cins" },
-          ]}
-          onSubmit={async (v) => {
-            await pets.create(personId, v);
-            setPetList(await pets.list(personId));
-          }}
-          onDelete={async (i) => {
-            await pets.remove(i.id);
-            setPetList(await pets.list(personId));
-          }}
-        />
+        {tab === 1 && (
+          <>
+            <InlineListManager<Vehicle>
+              title="Araçlar"
+              items={vehicleList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.plate}
+              getSecondary={(i) => [i.brand, i.model, i.color].filter(Boolean).join(" · ") || undefined}
+              fields={[
+                { name: "plate", label: "Plaka", required: true },
+                { name: "brand", label: "Marka" },
+                { name: "model", label: "Model" },
+                { name: "color", label: "Renk" },
+              ]}
+              onSubmit={async (v) => {
+                await vehicles.create(personId, v);
+                setVehicleList(await vehicles.list(personId));
+              }}
+              onDelete={async (i) => {
+                await vehicles.remove(i.id);
+                setVehicleList(await vehicles.list(personId));
+              }}
+            />
 
-        <InlineListManager<PowerOfAttorney>
-          title="Vekalet Bilgileri"
-          items={poaList}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.attorneyName}
-          getSecondary={(i) => [i.documentNo, i.issuedBy].filter(Boolean).join(" · ") || undefined}
-          fields={[
-            { name: "attorneyName", label: "Vekil Adı", required: true },
-            { name: "documentNo", label: "Belge No" },
-            { name: "issuedBy", label: "Veren Makam" },
-          ]}
-          onSubmit={async (v) => {
-            await powerOfAttorneys.create(personId, v);
-            setPoaList(await powerOfAttorneys.list(personId));
-          }}
-          onDelete={async (i) => {
-            await powerOfAttorneys.remove(i.id);
-            setPoaList(await powerOfAttorneys.list(personId));
-          }}
-        />
+            <InlineListManager<Pet>
+              title="Evcil Hayvanlar"
+              items={petList}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.name}
+              getSecondary={(i) => [i.species, i.breed].filter(Boolean).join(" · ") || undefined}
+              fields={[
+                { name: "name", label: "Adı", required: true },
+                { name: "species", label: "Tür" },
+                { name: "breed", label: "Cins" },
+              ]}
+              onSubmit={async (v) => {
+                await pets.create(personId, v);
+                setPetList(await pets.list(personId));
+              }}
+              onDelete={async (i) => {
+                await pets.remove(i.id);
+                setPetList(await pets.list(personId));
+              }}
+            />
+          </>
+        )}
 
-        <InlineListManager<ContactHistoryEntry>
-          title="İletişim Geçmişi"
-          items={history}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.summary}
-          getSecondary={(i) => `${i.channel} · ${new Date(i.createdAt).toLocaleString("tr-TR")}`}
-          fields={[
-            { name: "channel", label: "Kanal (telefon, e-posta, vb.)", required: true },
-            { name: "summary", label: "Özet", required: true },
-          ]}
-          onSubmit={async (v) => {
-            await createContactHistory(personId, { channel: v.channel, summary: v.summary });
-            setHistory(await listContactHistory(personId));
-          }}
-        />
+        {tab === 2 && (
+          <InlineListManager<PowerOfAttorney>
+            title="Vekalet Bilgileri"
+            items={poaList}
+            getKey={(i) => i.id}
+            getPrimary={(i) => i.attorneyName}
+            getSecondary={(i) => [i.documentNo, i.issuedBy].filter(Boolean).join(" · ") || undefined}
+            fields={[
+              { name: "attorneyName", label: "Vekil Adı", required: true },
+              { name: "documentNo", label: "Belge No" },
+              { name: "issuedBy", label: "Veren Makam" },
+            ]}
+            onSubmit={async (v) => {
+              await powerOfAttorneys.create(personId, v);
+              setPoaList(await powerOfAttorneys.list(personId));
+            }}
+            onDelete={async (i) => {
+              await powerOfAttorneys.remove(i.id);
+              setPoaList(await powerOfAttorneys.list(personId));
+            }}
+          />
+        )}
 
-        <InlineListManager<PersonNote>
-          title="Notlar"
-          items={notes}
-          getKey={(i) => i.id}
-          getPrimary={(i) => i.note}
-          getSecondary={(i) => new Date(i.createdAt).toLocaleString("tr-TR")}
-          fields={[{ name: "note", label: "Not", required: true }]}
-          onSubmit={async (v) => {
-            await createPersonNote(personId, v.note);
-            setNotes(await listPersonNotes(personId));
-          }}
-        />
+        {tab === 3 && (
+          <>
+            <InlineListManager<ContactHistoryEntry>
+              title="İletişim Geçmişi"
+              items={history}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.summary}
+              getSecondary={(i) => `${i.channel} · ${new Date(i.createdAt).toLocaleString("tr-TR")}`}
+              fields={[
+                { name: "channel", label: "Kanal (telefon, e-posta, vb.)", required: true },
+                { name: "summary", label: "Özet", required: true },
+              ]}
+              onSubmit={async (v) => {
+                await createContactHistory(personId, { channel: v.channel, summary: v.summary });
+                setHistory(await listContactHistory(personId));
+              }}
+            />
+
+            <InlineListManager<PersonNote>
+              title="Notlar"
+              items={notes}
+              getKey={(i) => i.id}
+              getPrimary={(i) => i.note}
+              getSecondary={(i) => new Date(i.createdAt).toLocaleString("tr-TR")}
+              fields={[{ name: "note", label: "Not", required: true }]}
+              onSubmit={async (v) => {
+                await createPersonNote(personId, v.note);
+                setNotes(await listPersonNotes(personId));
+              }}
+            />
+          </>
+        )}
       </Box>
 
       <Dialog open={loginDialogOpen} onClose={() => setLoginDialogOpen(false)} fullWidth maxWidth="xs">
