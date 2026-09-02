@@ -15,14 +15,17 @@ import (
 	"siteyonetimi/backend/internal/cargo"
 	"siteyonetimi/backend/internal/config"
 	"siteyonetimi/backend/internal/crm"
+	"siteyonetimi/backend/internal/document"
 	"siteyonetimi/backend/internal/finance"
 	"siteyonetimi/backend/internal/hr"
 	"siteyonetimi/backend/internal/inventory"
+	"siteyonetimi/backend/internal/legal"
 	"siteyonetimi/backend/internal/maintenance"
 	"siteyonetimi/backend/internal/meter"
 	"siteyonetimi/backend/internal/middleware"
 	"siteyonetimi/backend/internal/parking"
 	"siteyonetimi/backend/internal/procurement"
+	"siteyonetimi/backend/internal/reporting"
 	"siteyonetimi/backend/internal/request"
 	"siteyonetimi/backend/internal/reservation"
 	"siteyonetimi/backend/internal/security"
@@ -103,6 +106,15 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	surveyService := survey.NewService(pool)
 	surveyHandler := survey.NewHandler(surveyService)
 
+	documentService := document.NewService(pool)
+	documentHandler := document.NewHandler(documentService)
+
+	legalService := legal.NewService(pool)
+	legalHandler := legal.NewHandler(legalService)
+
+	reportingService := reporting.NewService(pool)
+	reportingHandler := reporting.NewHandler(reportingService)
+
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api.Group("/auth"))
 
@@ -126,6 +138,9 @@ func New(pool *pgxpool.Pool, cfg config.Config) *gin.Engine {
 	reservationHandler.RegisterRoutes(protected)
 	announcementHandler.RegisterRoutes(protected)
 	surveyHandler.RegisterRoutes(protected)
+	documentHandler.RegisterRoutes(protected)
+	legalHandler.RegisterRoutes(protected)
+	reportingHandler.RegisterRoutes(protected)
 
 	return router
 }

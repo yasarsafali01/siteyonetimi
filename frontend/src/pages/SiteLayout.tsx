@@ -34,6 +34,9 @@ const NAV_ITEMS = [
   { label: "Tesis Rezervasyon", path: "facility-reservations" },
   { label: "Duyurular", path: "announcements" },
   { label: "Anket", path: "surveys" },
+  { label: "Dokümanlar", path: "documents" },
+  { label: "Hukuk", path: "legal" },
+  { label: "Raporlama", path: "reports" },
 ];
 
 export function SiteLayout() {

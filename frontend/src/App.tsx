@@ -26,6 +26,9 @@ import { CargoPage } from "./pages/CargoPage";
 import { FacilityReservationsPage } from "./pages/FacilityReservationsPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import { SurveysPage } from "./pages/SurveysPage";
+import { DocumentsPage } from "./pages/DocumentsPage";
+import { LegalPage } from "./pages/LegalPage";
+import { ReportingPage } from "./pages/ReportingPage";
 
 function App() {
   return (
@@ -55,6 +58,9 @@ function App() {
               <Route path="facility-reservations" element={<FacilityReservationsPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="surveys" element={<SurveysPage />} />
+              <Route path="documents" element={<DocumentsPage />} />
+              <Route path="legal" element={<LegalPage />} />
+              <Route path="reports" element={<ReportingPage />} />
               <Route path="blocks/:blockId" element={<BlockUnitsPage />} />
             </Route>
             <Route path="/persons" element={<PersonsPage />} />
