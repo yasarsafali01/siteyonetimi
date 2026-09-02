@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { label: "Satın Alma", path: "procurement" },
   { label: "Personel", path: "employees" },
   { label: "Güvenlik", path: "security" },
+  { label: "Ziyaretçi", path: "visitors" },
 ];
 
 export function SiteLayout() {
