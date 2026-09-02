@@ -1,20 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius } from "../../theme";
+import { colors, radius, shadow } from "../../theme";
 
 type Tone = "primary" | "warning" | "success" | "info";
 
-const TONE_BG: Record<Tone, string> = {
-  primary: "#e0e7ff",
-  warning: colors.warningLight,
-  success: colors.successLight,
-  info: colors.infoLight,
-};
-const TONE_FG: Record<Tone, string> = {
-  primary: colors.primaryDark,
-  warning: "#92400e",
-  success: "#166534",
-  info: "#075985",
+const TONE_GRADIENT: Record<Tone, [string, string]> = {
+  primary: ["#4338ca", "#6366f1"],
+  warning: ["#b45309", "#f59e0b"],
+  success: ["#15803d", "#22c55e"],
+  info: ["#0369a1", "#38bdf8"],
 };
 
 export function StatCard({
@@ -28,10 +22,11 @@ export function StatCard({
   value: string;
   tone?: Tone;
 }) {
+  const [from] = TONE_GRADIENT[tone];
   return (
     <View style={styles.card}>
-      <View style={[styles.iconWrap, { backgroundColor: TONE_BG[tone] }]}>
-        <Ionicons name={icon} size={18} color={TONE_FG[tone]} />
+      <View style={[styles.iconWrap, { backgroundColor: from }]}>
+        <Ionicons name={icon} size={18} color="#fff" />
       </View>
       <View style={{ flexShrink: 1 }}>
         <Text style={styles.label} numberOfLines={1}>{label}</Text>
@@ -54,11 +49,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    ...shadow.sm,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm + 2,
     alignItems: "center",
     justifyContent: "center",
   },

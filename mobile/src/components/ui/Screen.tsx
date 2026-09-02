@@ -51,8 +51,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 21,
+    fontWeight: "800",
+    letterSpacing: -0.3,
     color: colors.textPrimary,
     flexShrink: 1,
   },

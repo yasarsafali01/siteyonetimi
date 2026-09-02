@@ -21,6 +21,7 @@ export function FormSheet({ visible, title, onClose, onSubmit, submitting, submi
       <View style={styles.backdrop}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.sheetWrap}>
           <View style={styles.sheet}>
+            <View style={styles.handle} />
             <View style={styles.header}>
               <Text style={styles.title}>{title}</Text>
               <Pressable onPress={onClose} hitSlop={12}>
@@ -54,8 +55,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
-    paddingTop: 16,
+    paddingTop: 10,
     maxHeight: "100%",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  handle: {
+    alignSelf: "center",
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+    marginBottom: 10,
   },
   header: {
     flexDirection: "row",

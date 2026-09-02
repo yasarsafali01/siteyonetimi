@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
-import { colors, radius } from "../../theme";
+import { colors, radius, shadow } from "../../theme";
 
 interface AppButtonProps {
   label: string;
@@ -18,8 +18,8 @@ export function AppButton({ label, onPress, variant = "contained", color = "prim
   const containerStyle = [
     styles.base,
     small && styles.small,
-    variant === "contained" && { backgroundColor: tone },
-    variant === "outlined" && { borderWidth: 1, borderColor: tone, backgroundColor: "transparent" },
+    variant === "contained" && { backgroundColor: tone, ...shadow.sm },
+    variant === "outlined" && { borderWidth: 1.5, borderColor: tone, backgroundColor: "transparent" },
     variant === "text" && { backgroundColor: "transparent", paddingHorizontal: 8 },
     isDisabled && { opacity: 0.5 },
   ];

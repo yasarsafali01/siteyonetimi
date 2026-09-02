@@ -80,20 +80,21 @@ export function AppShell({ title, subtitle, navItems, headerActions, onBack, chi
       <Toolbar sx={{ gap: 1.5, px: 2.5 }}>
         <Box
           sx={{
-            width: 34,
-            height: 34,
-            borderRadius: 2,
-            bgcolor: "primary.main",
-            color: "primary.contrastText",
+            width: 36,
+            height: 36,
+            borderRadius: 2.5,
+            background: "linear-gradient(135deg, #4338ca 0%, #6366f1 60%, #22d3ee 130%)",
+            color: "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            boxShadow: "0 4px 10px rgba(67, 56, 202, 0.35)",
           }}
         >
           <ApartmentIcon fontSize="small" />
         </Box>
-        <Typography variant="subtitle1" noWrap sx={{ fontWeight: 700 }}>
+        <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, letterSpacing: "-0.01em" }}>
           Site Yönetim
         </Typography>
       </Toolbar>
@@ -121,10 +122,11 @@ export function AppShell({ title, subtitle, navItems, headerActions, onBack, chi
             sx={{
               mb: 0.25,
               "&.active": {
-                bgcolor: "primary.main",
+                background: "linear-gradient(135deg, #4338ca 0%, #4f46e5 100%)",
                 color: "primary.contrastText",
+                boxShadow: "0 4px 10px rgba(67, 56, 202, 0.3)",
                 "& .MuiListItemIcon-root": { color: "inherit" },
-                "&:hover": { bgcolor: "primary.dark" },
+                "&:hover": { background: "linear-gradient(135deg, #3730a3 0%, #4338ca 100%)" },
               },
             }}
           >
@@ -136,7 +138,17 @@ export function AppShell({ title, subtitle, navItems, headerActions, onBack, chi
 
       <Divider />
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Avatar sx={{ width: 36, height: 36, bgcolor: "secondary.main", fontSize: 14 }}>{initials}</Avatar>
+        <Avatar
+          sx={{
+            width: 36,
+            height: 36,
+            fontSize: 14,
+            fontWeight: 700,
+            background: "linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)",
+          }}
+        >
+          {initials}
+        </Avatar>
         <Box sx={{ minWidth: 0, flexGrow: 1 }}>
           <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
             {userName ?? "..."}

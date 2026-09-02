@@ -38,6 +38,7 @@ export function AppDrawerContent({ backTo, ...props }: AppDrawerContentProps) {
         </View>
         <Text style={styles.brandText}>Site Yönetim</Text>
       </View>
+      <View style={styles.brandDivider} />
       <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 4 }}>
         {backTo && (
           <Pressable style={styles.backRow} onPress={() => router.push(backTo.href)}>
@@ -73,17 +74,28 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   logo: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
   brandText: {
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 15,
     color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  brandDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginBottom: 4,
   },
   backRow: {
     flexDirection: "row",
@@ -129,6 +141,8 @@ const styles = StyleSheet.create({
   },
   role: {
     fontSize: 11,
-    color: colors.textSecondary,
+    fontWeight: "600",
+    color: colors.primary,
+    marginTop: 1,
   },
 });

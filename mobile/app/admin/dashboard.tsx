@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable } from "react-native";
 import { Screen } from "../../src/components/ui/Screen";
-import { colors, radius } from "../../src/theme";
+import { colors, radius, shadow } from "../../src/theme";
 
 const MODULES = [
   { title: "Siteler", description: "Site, blok ve bağımsız bölüm yönetimi", path: "/admin/sites", icon: "business-outline" as const },
@@ -20,7 +20,7 @@ export default function DashboardScreen() {
         {MODULES.map((mod) => (
           <Pressable key={mod.path} style={styles.card} onPress={() => router.push(mod.path as never)}>
             <View style={styles.iconWrap}>
-              <Ionicons name={mod.icon} size={22} color={colors.primary} />
+              <Ionicons name={mod.icon} size={22} color="#fff" />
             </View>
             <Text style={styles.cardTitle}>{mod.title}</Text>
             <Text style={styles.cardDesc}>{mod.description}</Text>
@@ -40,20 +40,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 16,
+    padding: 18,
+    ...shadow.sm,
   },
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.sm,
-    backgroundColor: "#e0e7ff",
+    width: 42,
+    height: 42,
+    borderRadius: radius.sm + 4,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
+    letterSpacing: -0.2,
     color: colors.textPrimary,
   },
   cardDesc: {
