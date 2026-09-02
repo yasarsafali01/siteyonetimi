@@ -167,6 +167,63 @@ func (s *Service) IncomeStatement(ctx context.Context, tenantID, siteID uuid.UUI
 	return stmt, nil
 }
 
+// MonthlyIncomeExpense, son N ay için gelir/gider kırılımını döner (site bazlı gelir-gider grafiği için).
+func (s *Service) MonthlyIncomeExpense(ctx context.Context, tenantID, siteID uuid.UUID, months int) ([]MonthlyIncomeExpense, error) {
+	if months <= 0 {
+		months = 6
+	}
+	rows, err := s.pool.Query(ctx,
+		`WITH months AS (
+		   SELECT to_char(date_trunc('month', now()) - (n || ' months')::interval, 'YYYY-MM') AS period
+		   FROM generate_series(0, $3 - 1) AS n
+		 ),
+		 gelir_credit AS (
+		   SELECT to_char(je.entry_date, 'YYYY-MM') AS period, SUM(je.amount) AS total
+		   FROM journal_entries je JOIN accounts a ON a.id = je.credit_account_id
+		   WHERE a.tenant_id = $1 AND a.site_id = $2 AND a.type = 'gelir' GROUP BY 1
+		 ),
+		 gelir_debit AS (
+		   SELECT to_char(je.entry_date, 'YYYY-MM') AS period, SUM(je.amount) AS total
+		   FROM journal_entries je JOIN accounts a ON a.id = je.debit_account_id
+		   WHERE a.tenant_id = $1 AND a.site_id = $2 AND a.type = 'gelir' GROUP BY 1
+		 ),
+		 gider_debit AS (
+		   SELECT to_char(je.entry_date, 'YYYY-MM') AS period, SUM(je.amount) AS total
+		   FROM journal_entries je JOIN accounts a ON a.id = je.debit_account_id
+		   WHERE a.tenant_id = $1 AND a.site_id = $2 AND a.type = 'gider' GROUP BY 1
+		 ),
+		 gider_credit AS (
+		   SELECT to_char(je.entry_date, 'YYYY-MM') AS period, SUM(je.amount) AS total
+		   FROM journal_entries je JOIN accounts a ON a.id = je.credit_account_id
+		   WHERE a.tenant_id = $1 AND a.site_id = $2 AND a.type = 'gider' GROUP BY 1
+		 )
+		 SELECT m.period,
+		        COALESCE(gc.total, 0) - COALESCE(gd.total, 0) AS income,
+		        COALESCE(exd.total, 0) - COALESCE(exc.total, 0) AS expense
+		 FROM months m
+		 LEFT JOIN gelir_credit gc ON gc.period = m.period
+		 LEFT JOIN gelir_debit gd ON gd.period = m.period
+		 LEFT JOIN gider_debit exd ON exd.period = m.period
+		 LEFT JOIN gider_credit exc ON exc.period = m.period
+		 ORDER BY m.period`,
+		tenantID, siteID, months,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := []MonthlyIncomeExpense{}
+	for rows.Next() {
+		var r MonthlyIncomeExpense
+		if err := rows.Scan(&r.Period, &r.Income, &r.Expense); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, rows.Err()
+}
+
 // BalanceSheet (Bilanço) — basitleştirilmiş.
 func (s *Service) BalanceSheet(ctx context.Context, tenantID, siteID uuid.UUID) (BalanceSheet, error) {
 	balanceFor := func(accType string, creditNatured bool) (float64, error) {

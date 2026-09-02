@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import type { Account, AccountType, BalanceSheet, BudgetComparison, IncomeStatement, JournalEntry, TrialBalanceRow } from "../types/accounting";
+import type { MonthlyIncomeExpense } from "../components/IncomeExpenseChart";
 
 export async function listAccounts(siteId: string) {
   const { data } = await apiClient.get<Account[]>(`/sites/${siteId}/accounts`);
@@ -31,6 +32,11 @@ export async function getTrialBalance(siteId: string) {
 
 export async function getIncomeStatement(siteId: string) {
   const { data } = await apiClient.get<IncomeStatement>(`/sites/${siteId}/reports/income-statement`);
+  return data;
+}
+
+export async function getMonthlyIncomeExpense(siteId: string, months = 6) {
+  const { data } = await apiClient.get<MonthlyIncomeExpense[]>(`/sites/${siteId}/reports/monthly-income-expense`, { params: { months } });
   return data;
 }
 

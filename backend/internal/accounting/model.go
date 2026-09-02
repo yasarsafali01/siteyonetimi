@@ -48,6 +48,13 @@ type IncomeStatement struct {
 	NetIncome    float64 `json:"netIncome"`
 }
 
+// MonthlyIncomeExpense, gelir/gider grafiği için ay bazlı kırılımdır.
+type MonthlyIncomeExpense struct {
+	Period  string  `json:"period"`
+	Income  float64 `json:"income"`
+	Expense float64 `json:"expense"`
+}
+
 // BalanceSheet, basitleştirilmiş bilanço özetidir.
 type BalanceSheet struct {
 	Cash             float64 `json:"cash"`        // kasa

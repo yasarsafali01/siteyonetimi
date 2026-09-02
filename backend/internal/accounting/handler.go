@@ -3,6 +3,7 @@ package accounting
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -29,6 +30,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	rg.GET("/sites/:siteId/reports/trial-balance", h.trialBalance)
 	rg.GET("/sites/:siteId/reports/income-statement", h.incomeStatement)
+	rg.GET("/sites/:siteId/reports/monthly-income-expense", h.monthlyIncomeExpense)
 	rg.GET("/sites/:siteId/reports/balance-sheet", h.balanceSheet)
 
 	rg.GET("/sites/:siteId/budgets", h.listBudgetComparison)
@@ -199,6 +201,20 @@ func (h *Handler) incomeStatement(c *gin.Context) {
 		return
 	}
 	result, err := h.service.IncomeStatement(c.Request.Context(), tenantID(c), siteID)
+	if err != nil {
+		handleServiceError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) monthlyIncomeExpense(c *gin.Context) {
+	siteID, ok := paramUUID(c, "siteId")
+	if !ok {
+		return
+	}
+	months, _ := strconv.Atoi(c.Query("months"))
+	result, err := h.service.MonthlyIncomeExpense(c.Request.Context(), tenantID(c), siteID, months)
 	if err != nil {
 		handleServiceError(c, err)
 		return
