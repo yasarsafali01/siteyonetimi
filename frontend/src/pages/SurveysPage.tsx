@@ -273,7 +273,7 @@ export function SurveysPage() {
             results.map((r) => (
               <Box key={r.optionId} sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
                 <Typography variant="body2">{r.optionText}</Typography>
-                <Typography variant="body2" fontWeight="bold">{r.voteCount}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: "bold" }}>{r.voteCount}</Typography>
               </Box>
             ))
           )}
