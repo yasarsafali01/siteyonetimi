@@ -17,14 +17,14 @@ export async function getRefreshToken() {
 }
 
 export async function storeTokens(accessToken: string, refreshToken: string) {
-  await AsyncStorage.setMany({
-    [ACCESS_TOKEN_KEY]: accessToken,
-    [REFRESH_TOKEN_KEY]: refreshToken,
-  });
+  await AsyncStorage.multiSet([
+    [ACCESS_TOKEN_KEY, accessToken],
+    [REFRESH_TOKEN_KEY, refreshToken],
+  ]);
 }
 
 export async function clearTokens() {
-  await AsyncStorage.removeMany([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+  await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 }
 
 const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
