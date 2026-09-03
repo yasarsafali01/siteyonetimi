@@ -47,10 +47,11 @@ frontend/            React + TS + MUI web uygulaması (Vite)
   src/auth/           AuthContext
   src/pages/          Login, Dashboard, ProtectedRoute
 
-mobile/              React Native (Expo) uygulaması
+mobile/              React Native (Expo) uygulaması, expo-router ile dosya tabanlı routing
+  app/                login.tsx, admin/ (dashboard, sites, persons, users), resident/ (sakin paneli: borç, talep, rezervasyon, davetiye), site/[siteId]/ (19 site modülü: finans, muhasebe, sayaç, arıza, bakım, demirbaş, satın alma, personel, güvenlik, ziyaretçi, geçiş kontrol, otopark, kargo, rezervasyon, duyuru, anket, doküman, hukuk, raporlama)
   src/api/            axios client (AsyncStorage ile token yönetimi)
-  src/auth/           AuthContext
-  src/screens/        Login, Dashboard
+  src/auth/           AuthContext / ResidentContext
+  src/components/ui/  ortak bileşenler (Screen, StatCard, Chip, FormSheet, ListRow...)
 
 docs/ANALIZ.md       Tam kapsam / özellik dokümanı (26 modül)
 docker-compose.yml   PostgreSQL + Redis (yerel geliştirme)
@@ -70,7 +71,7 @@ cd backend && go run ./cmd/api       # API -> http://localhost:8081
 
 cd frontend && npm install && npm run dev   # Web -> http://localhost:5173
 
-cd mobile && npm install && npx expo start  # Mobil (Expo)
+cd mobile && npm install && npx expo start --port 8082  # Mobil (Expo) — 8081 backend ile çakışır, 8082 kullan
 ```
 
 Detaylı kurulum, ortam değişkenleri ve platform notları için [INSTALL.md](INSTALL.md) dosyasına bakın.
